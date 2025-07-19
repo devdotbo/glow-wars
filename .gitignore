@@ -14,6 +14,14 @@ yarn.lock
 .output
 .tanstack
 
+# Backup files and directories
+.bk/
+*.bak
+*.backup
+*~
+*.tmp
+*.temp
+
 /build/
 /api/
 /server/build

@@ -5,23 +5,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 **Development:**
+
 - `npm run dev` - Start development servers (Convex backend and Vite frontend)
 - `npm run dev:web` - Start only the Vite development server
 - `npm run dev:convex` - Start only the Convex development server
 
 **Build and Production:**
+
 - `npm run build` - Build the application and run TypeScript type checking
 - `npm run start` - Start the production server
 
 **Code Quality:**
+
 - `npm run format` - Format all files with Prettier
 
 **Data Management:**
+
 - `npm run seed` - Import sample data into the Convex tasks table from sampleData.jsonl
 
 ## Architecture
 
 This is a full-stack TypeScript application using:
+
 - **TanStack Start** with file-based routing for the React frontend
 - **Convex** as the backend database and real-time sync engine
 - **Clerk** for authentication
@@ -29,7 +34,7 @@ This is a full-stack TypeScript application using:
 
 ### Key Architectural Patterns
 
-1. **Authentication Flow**: 
+1. **Authentication Flow**:
    - Clerk provides auth via `ClerkProvider` in the root route
    - Protected routes use the `_authed` layout that checks for `userId` in context
    - Convex gets auth tokens from Clerk using the "convex" JWT template
@@ -57,8 +62,9 @@ The project follows specific Convex patterns (from `.cursor/rules/convex_rules.m
 ## Configuration Requirements
 
 Before running the app, ensure these environment variables are set:
+
 - `CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY` 
+- `CLERK_SECRET_KEY`
 - `CLERK_JWT_ISSUER_DOMAIN`
 - `VITE_CONVEX_URL`
 - `VITE_CLERK_FRONTEND_API_URL`
@@ -77,6 +83,22 @@ Configure the Clerk domain in `convex/auth.config.ts` to match your Clerk JWT te
 - Commit changes after each completed step or feature
 - Use descriptive commit messages that explain what was changed
 
+## Git Commit Guidelines
+
+To ensure clean commits without unintended files:
+
+1. **Always run `git status` before staging files** - Review what files have been modified
+2. **Use `git add --dry-run .` to preview what will be added** - This shows what would be staged without actually staging
+3. **Review staged files with `git diff --cached` before committing** - Verify the actual changes being committed
+4. **Never use `git add .` without checking** - Prefer explicit file paths or use `git add -p` for interactive staging
+5. **Stage files individually when unsure** - Better to be explicit than to include unwanted files
+6. **Check for unintended files** like:
+   - Backup files (`.bk`, `*.bak`, `*.backup`)
+   - Temporary files (`*.tmp`, `*.temp`, `*~`)
+   - IDE-specific files or directories
+   - Generated files that shouldn't be tracked
+7. **If you accidentally stage files, use `git restore --staged <file>` to unstage them**
+
 ## Glow Wars Workflow Rules
 
 When working on Glow Wars tasks, follow these critical rules:
@@ -90,6 +112,7 @@ When working on Glow Wars tasks, follow these critical rules:
 7. **Session Handoff**: Before ending, update state.json with specific nextAction
 
 **Important Files**:
+
 - `.workflow/state.json` - Current task state and progress
 - `.workflow/progress.md` - Human-readable development log
 - `docs/glow-wars-technical-implementation.md` - Task specifications
