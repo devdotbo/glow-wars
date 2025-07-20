@@ -98,6 +98,21 @@ Configure the Clerk domain in `convex/auth.config.ts` to match your Clerk JWT te
 - Commit changes after each completed step or feature
 - Use descriptive commit messages that explain what was changed
 
+## Development Tools
+
+### Convex MCP Server
+
+The project has Convex MCP server configured for development debugging.
+Use it to inspect game state, run queries, and manage test data.
+
+**Common uses**:
+- Inspect game state: `mcp__convex__tables` and `mcp__convex__data`
+- Run queries: `mcp__convex__run` with function names
+- Clear test data: `mcp__convex__run` with `testingFunctions.js:clearAll`
+- Manage env vars: `mcp__convex__envList`, `envGet`, `envSet`
+
+The MCP server is configured in `.claude/settings.json` and `.mcp.json`.
+
 ## Git Commit Guidelines
 
 To ensure clean commits without unintended files:
