@@ -67,4 +67,16 @@ export default defineSchema({
   })
     .index('by_game_and_position', ['gameId', 'gridX', 'gridY'])
     .index('by_game', ['gameId']),
+
+  // AI entities (sparks, creepers, etc)
+  aiEntities: defineTable({
+    gameId: v.id('games'),
+    type: v.string(),
+    position: v.object({ x: v.number(), y: v.number() }),
+    state: v.string(),
+    targetId: v.optional(v.id('players')),
+    health: v.number(),
+  })
+    .index('by_game', ['gameId'])
+    .index('by_game_and_type', ['gameId', 'type']),
 })

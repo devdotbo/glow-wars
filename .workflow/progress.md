@@ -9,8 +9,8 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - [x] Task 1: Core Database Schema & Player Management
 - [x] Task 2: Game Session Management
 - [x] Task 3: Real-time Position Updates & Territory System
-- [ ] Task 4: Glow System & Resource Management
-- [ ] Task 5: Basic AI Entity System (Sparks)
+- [x] Task 4: Glow System & Resource Management
+- [x] Task 5: Basic AI Entity System (Sparks)
 - [ ] Task 6: Collision Detection & Player Elimination
 - [ ] Task 7: Advanced AI - Shadow Creepers
 - [ ] Task 8: Power-up System
@@ -179,6 +179,107 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 #### Files Modified:
 
 - `convex/schema.ts` - Added positions and territory tables
+
+---
+
+### Task 4: Glow System & Resource Management
+
+**Status**: Completed  
+**Completed**: 2025-01-20T08:53:00Z  
+
+#### Deliverables Completed:
+
+- [x] Glow radius decay system with automatic scheduling
+- [x] Boost mechanics for consuming glow
+- [x] Resource consumption and management
+- [x] Territory-based painting radius calculation
+- [x] Glow replenishment from territory ownership
+
+#### Test Results (5/5 passing):
+
+- [x] Decay glow radius over time
+- [x] Enforce minimum glow radius (10 units)
+- [x] Consume glow for boost (5 units cost)
+- [x] Calculate painting speed based on glow
+- [x] Replenish glow from territory ownership
+
+#### Implementation Notes:
+
+- Created cron job system for automatic glow decay every 30 seconds
+- Painting radius scales with glow: radius 2 at 50+ glow, radius 1 at 30+ glow, radius 0 below 30
+- Territory ownership provides glow replenishment (0.1 per owned cell)
+- Min/max glow radius: 10-100 units
+- Modified territory painting to paint multiple cells based on glow radius
+
+#### Technical Decisions:
+
+- Glow decay runs automatically for all active games
+- Boost cost is fixed at 5 glow units (planned for speed multiplier in future)
+- Larger glow radius creates circular painting pattern
+- Territory tests updated to accommodate multi-cell painting behavior
+
+#### Files Created:
+
+- `convex/glow.ts` - Glow system functions
+- `convex/glow.test.ts` - Glow system tests
+- `convex/crons.ts` - Scheduled task configuration
+
+#### Files Modified:
+
+- `convex/territory.ts` - Added multi-cell painting based on glow radius
+- `convex/territory.test.ts` - Updated tests for multi-cell painting
+- `docs/glow-wars-technical-implementation.md` - Removed token references, updated testing description
+
+---
+
+### Task 5: Basic AI Entity System (Sparks)
+
+**Status**: Completed  
+**Completed**: 2025-01-20T09:14:00Z  
+
+#### Deliverables Completed:
+
+- [x] Spark entity spawning system
+- [x] Basic wander behavior with random movement
+- [x] Player detection system (50 unit radius)
+- [x] State transitions (wander → flee)
+- [x] Player consumption mechanics (5 glow bonus)
+
+#### Test Results (5/5 passing):
+
+- [x] Spawn sparks at game start
+- [x] Implement wander movement pattern
+- [x] Detect players within radius and transition to flee
+- [x] Transition from flee to wander when player leaves
+- [x] Allow players to consume sparks for glow bonus
+
+#### Implementation Notes:
+
+- Created modular AI system with separate entity management and spark behavior
+- Implemented helper pattern for behavior updates (Convex best practice)
+- Spark detection radius: 50 units, consume distance: 10 units
+- Sparks flee from nearest player when detected
+- Cron job updates all sparks every 1 second
+- Test had to position players away from sparks to avoid random flee states
+
+#### Technical Decisions:
+
+- Used helper functions to enable both direct calls and cron execution
+- Sparks give +5 glow when consumed
+- Wander uses random direction changes
+- Flee moves directly away from nearest player
+- Entity health system ready for damage mechanics
+
+#### Files Created:
+
+- `convex/ai/entities.ts` - Core entity management
+- `convex/ai/sparks.ts` - Spark-specific AI logic
+- `convex/sparks.test.ts` - Integration tests (moved from ai/ subdirectory)
+
+#### Files Modified:
+
+- `convex/schema.ts` - Added aiEntities table
+- `convex/crons.ts` - Added spark update interval
 
 ---
 
