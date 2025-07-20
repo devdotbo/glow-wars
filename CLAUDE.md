@@ -137,6 +137,9 @@ When working on Glow Wars tasks, follow these critical rules:
 2. **State Updates**: Update `.workflow/state.json` after every meaningful action
 3. **Test-Driven**: Write tests first, then implementation (TDD approach)
 4. **Atomic Commits**: Each task completion gets its own commit
+   - **IMPORTANT**: Always commit automatically after completing each task
+   - Do NOT wait for explicit user request to commit
+   - Use descriptive commit messages following the pattern: "feat: [description] (Task N)"
 5. **Progress Tracking**: Update `.workflow/progress.md` with test results and notes
 6. **Context Management**: Only load files needed for current task
 7. **Session Handoff**: Before ending, update state.json with specific nextAction
