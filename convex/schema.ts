@@ -45,4 +45,26 @@ export default defineSchema({
   })
     .index('by_game_and_player', ['gameId', 'playerId'])
     .index('by_game', ['gameId']),
+
+  // Real-time position tracking
+  positions: defineTable({
+    gameId: v.id('games'),
+    playerId: v.id('players'),
+    x: v.number(),
+    y: v.number(),
+    timestamp: v.number(),
+  })
+    .index('by_game_and_player', ['gameId', 'playerId'])
+    .index('by_game', ['gameId']),
+
+  // Territory ownership grid
+  territory: defineTable({
+    gameId: v.id('games'),
+    gridX: v.number(),
+    gridY: v.number(),
+    ownerId: v.optional(v.id('players')),
+    paintedAt: v.number(),
+  })
+    .index('by_game_and_position', ['gameId', 'gridX', 'gridY'])
+    .index('by_game', ['gameId']),
 })

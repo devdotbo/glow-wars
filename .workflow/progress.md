@@ -8,7 +8,7 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 
 - [x] Task 1: Core Database Schema & Player Management
 - [x] Task 2: Game Session Management
-- [ ] Task 3: Real-time Position Updates & Territory System
+- [x] Task 3: Real-time Position Updates & Territory System
 - [ ] Task 4: Glow System & Resource Management
 - [ ] Task 5: Basic AI Entity System (Sparks)
 - [ ] Task 6: Collision Detection & Player Elimination
@@ -121,6 +121,64 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - `package.json` - Added @edge-runtime/vm
 - `CLAUDE.md` - Added pnpm requirement
 - `docs/glow-wars-technical-implementation.md` - Updated testing approach
+
+---
+
+### Task 3: Real-time Position Updates & Territory System
+
+**Status**: Completed  
+**Completed**: 2025-01-20T08:20:00Z  
+**Actual Tokens Used**: ~7k
+
+#### Deliverables Completed:
+
+- [x] Real-time position update system with validation
+- [x] Territory painting mechanism (automatic on movement)
+- [x] Territory ownership calculation and statistics
+- [x] Grid-based territory system (100x100 cells)
+
+#### Test Results (12/12 passing):
+
+- [x] Update player position with valid coordinates
+- [x] Validate position boundaries (0-1000 range)
+- [x] Prevent position updates for inactive games
+- [x] Prevent position updates for dead players
+- [x] Handle concurrent position updates
+- [x] Stream all player positions in game
+- [x] Paint territory at player position
+- [x] Overwrite existing territory
+- [x] Calculate territory ownership percentages
+- [x] Automatically paint territory when position updates
+- [x] Handle concurrent territory painting
+- [x] Validate grid boundaries
+
+#### Implementation Notes:
+
+- Map size: 1000x1000 units with 10x10 grid cells (100x100 total cells)
+- Position updates automatically paint territory at player location
+- Territory painting uses helper function pattern (Convex best practice)
+- Last painter wins for territory ownership
+- Added positions table for position history tracking
+- Added territory table with grid-based ownership
+- Comprehensive indexes for efficient queries
+
+#### Technical Decisions:
+
+- Used helper function pattern to avoid direct function calls
+- Territory painting is automatic when position updates
+- Grid system allows efficient territory queries
+- Position history preserved for potential replay features
+
+#### Files Created:
+
+- `convex/positions.ts` - Position management functions
+- `convex/positions.test.ts` - Position system tests
+- `convex/territory.ts` - Territory painting functions
+- `convex/territory.test.ts` - Territory system tests
+
+#### Files Modified:
+
+- `convex/schema.ts` - Added positions and territory tables
 
 ---
 
