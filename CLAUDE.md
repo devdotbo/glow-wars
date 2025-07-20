@@ -2,26 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Package Manager
+
+**IMPORTANT**: Always use `pnpm` for package management in this project. Never use `npm` or `yarn`.
+
 ## Commands
 
 **Development:**
 
-- `npm run dev` - Start development servers (Convex backend and Vite frontend)
-- `npm run dev:web` - Start only the Vite development server
-- `npm run dev:convex` - Start only the Convex development server
+- `pnpm dev` - Start development servers (Convex backend and Vite frontend)
+- `pnpm dev:web` - Start only the Vite development server
+- `pnpm dev:convex` - Start only the Convex development server
 
 **Build and Production:**
 
-- `npm run build` - Build the application and run TypeScript type checking
-- `npm run start` - Start the production server
+- `pnpm build` - Build the application and run TypeScript type checking
+- `pnpm start` - Start the production server
 
 **Code Quality:**
 
-- `npm run format` - Format all files with Prettier
+- `pnpm format` - Format all files with Prettier
 
 **Data Management:**
 
-- `npm run seed` - Import sample data into the Convex tasks table from sampleData.jsonl
+- `pnpm seed` - Import sample data into the Convex tasks table from sampleData.jsonl
+- `pnpm test` - Run tests with Vitest
 
 ## Architecture
 

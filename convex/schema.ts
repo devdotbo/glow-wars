@@ -29,6 +29,7 @@ export default defineSchema({
     ),
     maxPlayers: v.number(),
     mapType: v.string(),
+    createdBy: v.id('players'),
     startedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
   }).index('by_status', ['status']),
@@ -40,6 +41,7 @@ export default defineSchema({
     glowRadius: v.number(),
     isAlive: v.boolean(),
     score: v.number(),
+    joinedAt: v.number(),
   })
     .index('by_game_and_player', ['gameId', 'playerId'])
     .index('by_game', ['gameId']),

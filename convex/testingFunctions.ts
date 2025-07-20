@@ -1,7 +1,7 @@
-import { mutation } from './_generated/server'
+import { internalMutation } from './_generated/server'
 import { v } from 'convex/values'
 
-export const clearAll = mutation({
+export const clearAll = internalMutation({
   args: {},
   handler: async (ctx) => {
     // Clear all data from Glow Wars tables

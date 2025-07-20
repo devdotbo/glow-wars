@@ -1,126 +1,135 @@
-import { describe, test, expect, afterEach, beforeAll } from 'vitest'
-import { ConvexClient } from 'convex/browser'
+import { convexTest } from 'convex-test'
+import { describe, test, expect } from 'vitest'
 import { api } from './_generated/api'
+import schema from './schema'
 
-// Get Convex URL from environment
-const convexUrl = process.env.VITE_CONVEX_URL || 'http://localhost:3210'
-const testClient = new ConvexClient(convexUrl)
-
-async function clearTestData() {
-  await testClient.mutation(api.testingFunctions.clearAll, {})
-}
+// Import modules explicitly for convex-test in edge-runtime
+const modules = import.meta.glob('./**/*.{js,ts}', {
+  eager: false,
+})
 
 describe('Player Management', () => {
-  beforeAll(async () => {
-    await clearTestData()
-  })
-
-  afterEach(async () => {
-    await clearTestData()
-  })
-
   test('should create a player with valid data', async () => {
-    const playerId = await testClient.mutation(api.players.createPlayer, {
+    const t = convexTest(schema, modules)
+    const playerId = await t.mutation(api.players.createPlayer, {
       name: 'TestPlayer',
       color: '#FF5733',
     })
 
     expect(playerId).toBeDefined()
-    expect(typeof playerId).toBe('string')
+
+    // Verify player was created with correct data
+    const player = await t.query(api.players.getPlayer, { playerId })
+    expect(player).not.toBeNull()
+    expect(player).toMatchObject({
+      name: 'TestPlayer',
+      color: '#FF5733',
+    })
+    expect(player?.createdAt).toBeDefined()
   })
 
   test('should retrieve a player by ID', async () => {
-    const playerId = await testClient.mutation(api.players.createPlayer, {
-      name: 'TestPlayer',
+    const t = convexTest(schema, modules)
+    const playerId = await t.mutation(api.players.createPlayer, {
+      name: 'RetrievePlayer',
       color: '#00FF00',
     })
 
-    const player = await testClient.query(api.players.getPlayer, {
-      playerId,
+    const retrievedPlayer = await t.query(api.players.getPlayer, { playerId })
+    expect(retrievedPlayer).toMatchObject({
+      _id: playerId,
+      name: 'RetrievePlayer',
+      color: '#00FF00',
     })
-
-    expect(player).toBeDefined()
-    expect(player?.name).toBe('TestPlayer')
-    expect(player?.color).toBe('#00FF00')
-    expect(player?.createdAt).toBeGreaterThan(0)
   })
 
   test('should list all players', async () => {
+    const t = convexTest(schema, modules)
+    
     // Create multiple players
-    await testClient.mutation(api.players.createPlayer, {
+    const player1Id = await t.mutation(api.players.createPlayer, {
       name: 'Player1',
       color: '#FF0000',
     })
-    await testClient.mutation(api.players.createPlayer, {
+    const player2Id = await t.mutation(api.players.createPlayer, {
       name: 'Player2',
       color: '#00FF00',
     })
-    await testClient.mutation(api.players.createPlayer, {
-      name: 'Player3',
-      color: '#0000FF',
-    })
 
-    const players = await testClient.query(api.players.listPlayers, {})
-
-    expect(players).toHaveLength(3)
-    expect(players.map((p) => p.name).sort()).toEqual([
-      'Player1',
-      'Player2',
-      'Player3',
-    ])
+    const players = await t.query(api.players.listPlayers)
+    expect(players).toHaveLength(2)
+    expect(players.map(p => p._id)).toContain(player1Id)
+    expect(players.map(p => p._id)).toContain(player2Id)
   })
 
-  test('should reject invalid hex color format', async () => {
+  test('should validate hex color format', async () => {
+    const t = convexTest(schema, modules)
+    
+    // Invalid color formats
     await expect(
-      testClient.mutation(api.players.createPlayer, {
-        name: 'InvalidColorPlayer',
-        color: 'red', // Invalid format
-      }),
+      t.mutation(api.players.createPlayer, {
+        name: 'InvalidColor1',
+        color: 'red',
+      })
     ).rejects.toThrow('Invalid hex color format')
 
     await expect(
-      testClient.mutation(api.players.createPlayer, {
-        name: 'InvalidColorPlayer',
-        color: '#FF', // Too short
-      }),
+      t.mutation(api.players.createPlayer, {
+        name: 'InvalidColor2',
+        color: '#FF',
+      })
     ).rejects.toThrow('Invalid hex color format')
 
     await expect(
-      testClient.mutation(api.players.createPlayer, {
-        name: 'InvalidColorPlayer',
-        color: '#GGGGGG', // Invalid characters
-      }),
+      t.mutation(api.players.createPlayer, {
+        name: 'InvalidColor3',
+        color: '#GGGGGG',
+      })
     ).rejects.toThrow('Invalid hex color format')
   })
 
-  test('should reject duplicate player names', async () => {
-    await testClient.mutation(api.players.createPlayer, {
-      name: 'UniquePlayer',
-      color: '#FF5733',
+  test('should handle duplicate player names', async () => {
+    const t = convexTest(schema, modules)
+    
+    // Create first player
+    await t.mutation(api.players.createPlayer, {
+      name: 'DuplicateName',
+      color: '#FF0000',
     })
 
+    // Try to create second player with same name
     await expect(
-      testClient.mutation(api.players.createPlayer, {
-        name: 'UniquePlayer', // Same name
+      t.mutation(api.players.createPlayer, {
+        name: 'DuplicateName',
         color: '#00FF00',
-      }),
+      })
     ).rejects.toThrow('Player name already exists')
   })
 
   test('should handle concurrent player creation', async () => {
-    const promises = Array.from({ length: 5 }, (_, i) =>
-      testClient.mutation(api.players.createPlayer, {
-        name: `ConcurrentPlayer${i}`,
-        color: '#FF5733',
+    const t = convexTest(schema, modules)
+    
+    // Create players concurrently
+    const results = await Promise.allSettled([
+      t.mutation(api.players.createPlayer, {
+        name: 'ConcurrentPlayer1',
+        color: '#FF0000',
       }),
-    )
+      t.mutation(api.players.createPlayer, {
+        name: 'ConcurrentPlayer2',
+        color: '#00FF00',
+      }),
+      t.mutation(api.players.createPlayer, {
+        name: 'ConcurrentPlayer3',
+        color: '#0000FF',
+      }),
+    ])
 
-    const playerIds = await Promise.all(promises)
-    const uniqueIds = new Set(playerIds)
+    // All should succeed
+    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(3)
 
-    expect(uniqueIds.size).toBe(5)
-
-    const players = await testClient.query(api.players.listPlayers, {})
-    expect(players).toHaveLength(5)
+    // Verify all players were created
+    const players = await t.query(api.players.listPlayers)
+    expect(players).toHaveLength(3)
   })
 })

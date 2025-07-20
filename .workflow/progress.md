@@ -7,7 +7,7 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 ## Task Status Summary
 
 - [x] Task 1: Core Database Schema & Player Management
-- [ ] Task 2: Game Session Management
+- [x] Task 2: Game Session Management
 - [ ] Task 3: Real-time Position Updates & Territory System
 - [ ] Task 4: Glow System & Resource Management
 - [ ] Task 5: Basic AI Entity System (Sparks)
@@ -62,6 +62,65 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 
 - `convex/schema.ts` - Added Glow Wars tables
 - `package.json` - Added test dependencies and script
+
+---
+
+### Task 2: Game Session Management
+
+**Status**: Completed  
+**Completed**: 2025-01-20T07:52:50Z  
+**Actual Tokens Used**: ~9k
+
+#### Deliverables Completed:
+
+- [x] Game creation with configuration (name, maxPlayers, mapType)
+- [x] Player joining/leaving mechanics with validation
+- [x] Game state transitions (waiting -> active)
+- [x] Switched from real backend testing to convex-test mock system
+
+#### Test Results (6/6 passing):
+
+- [x] Create game with valid configuration
+- [x] Join game as player (with auto-join for creator)
+- [x] Prevent joining full games
+- [x] Start game with minimum players (2)
+- [x] Handle player leaving game (with creator cleanup)
+- [x] List available games with player counts
+
+#### Implementation Notes:
+
+- Migrated entire test suite to use convex-test mock system
+- Added pnpm as the required package manager (updated CLAUDE.md)
+- Installed @edge-runtime/vm for vitest edge-runtime environment
+- Updated schema to include createdBy and joinedAt fields
+- Implemented all game session CRUD operations
+- Added import.meta.glob pattern for module loading in tests
+- Changed testingFunctions to internalMutation
+- Updated technical docs to reflect mock-based testing approach
+
+#### Technical Decisions:
+
+- Auto-join creator when creating a game
+- Delete game if creator leaves while in waiting state
+- Minimum 2 players required to start a game
+- Random position generation for joining players
+- Initial glow radius set to 50 for all players
+
+#### Files Created:
+
+- `convex/games.ts` - Game session management functions
+- `convex/games.test.ts` - Integration tests
+- `convex/setupTests.ts` - Test setup helper (can be removed)
+
+#### Files Modified:
+
+- `convex/schema.ts` - Added createdBy and joinedAt fields
+- `convex/players.test.ts` - Migrated to convex-test
+- `convex/testingFunctions.ts` - Changed to internalMutation
+- `vitest.config.ts` - Configured for edge-runtime
+- `package.json` - Added @edge-runtime/vm
+- `CLAUDE.md` - Added pnpm requirement
+- `docs/glow-wars-technical-implementation.md` - Updated testing approach
 
 ---
 

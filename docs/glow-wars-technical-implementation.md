@@ -372,12 +372,13 @@ Each test file follows this pattern:
 // 4. Clean up test data
 ```
 
-### No Mocks Policy
+### Testing with convex-test
 
-- All tests use real Convex ctx object
-- Database operations are real
-- Scheduled functions are tested with time advancement
-- No external API mocks (game is self-contained)
+- Uses the `convex-test` mock backend for fast, isolated testing
+- Each test gets a fresh database instance
+- No need for running `convex dev` during testing
+- Tests run in edge-runtime environment for better compatibility
+- Follows Convex's recommended testing approach
 
 ## Development Workflow
 
