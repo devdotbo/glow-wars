@@ -1,6 +1,7 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import { paintTerritoryHelper } from './territory'
+import { checkCollisionsHelper } from './collision'
 
 const MAP_SIZE = 1000
 
@@ -62,6 +63,11 @@ export const updatePosition = mutation({
       playerId: args.playerId,
       x: args.x,
       y: args.y,
+    })
+
+    // Check for collisions after position update
+    await checkCollisionsHelper(ctx, {
+      gameId: args.gameId,
     })
 
     return null

@@ -15,4 +15,10 @@ crons.interval(
   api.ai.sparks.updateAllSparks
 )
 
+crons.interval(
+  'check player collisions',
+  { milliseconds: 500 },
+  api.collision.checkAllActiveGames
+)
+
 export default crons

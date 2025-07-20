@@ -11,7 +11,7 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - [x] Task 3: Real-time Position Updates & Territory System
 - [x] Task 4: Glow System & Resource Management
 - [x] Task 5: Basic AI Entity System (Sparks)
-- [ ] Task 6: Collision Detection & Player Elimination
+- [x] Task 6: Collision Detection & Player Elimination
 - [ ] Task 7: Advanced AI - Shadow Creepers
 - [ ] Task 8: Power-up System
 - [ ] Task 9: Victory Conditions & Game End
@@ -280,6 +280,58 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 
 - `convex/schema.ts` - Added aiEntities table
 - `convex/crons.ts` - Added spark update interval
+
+---
+
+### Task 6: Collision Detection & Player Elimination
+
+**Status**: Completed  
+**Completed**: 2025-01-20T09:48:00Z  
+
+#### Deliverables Completed:
+
+- [x] Player-player collision detection
+- [x] Size-based elimination mechanics
+- [x] Equal-size bounce mechanics
+- [x] Collision handling after position updates
+- [x] Periodic collision checks via cron job
+
+#### Test Results (5/5 passing):
+
+- [x] Detect player collisions within collision distance
+- [x] Eliminate smaller player on collision
+- [x] Bounce players with similar sizes
+- [x] Handle multiple simultaneous collisions
+- [x] Not detect collisions for dead players
+
+#### Implementation Notes:
+
+- Collision distance: 15 units
+- Size difference threshold: 5 units for elimination
+- Bounce force: 20 units push distance
+- Winner gains 30% of eliminated player's glow
+- Collisions checked automatically on position updates
+- Additional cron job runs every 500ms for all active games
+- Added consumeGlow function to glow.ts for testing
+
+#### Technical Decisions:
+
+- Simple Euclidean distance for collision detection
+- Automatic collision checks integrated with position updates
+- Bounce physics pushes players apart along collision vector
+- Dead players marked but kept in game for future spectating
+- Map boundary checks ensure players stay within 0-1000 range
+
+#### Files Created:
+
+- `convex/collision.ts` - Collision detection and elimination logic
+- `convex/collision.test.ts` - Integration tests
+
+#### Files Modified:
+
+- `convex/positions.ts` - Added collision check after position updates
+- `convex/crons.ts` - Added collision check interval
+- `convex/glow.ts` - Added consumeGlow function for testing
 
 ---
 
