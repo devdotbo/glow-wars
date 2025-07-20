@@ -1,5 +1,6 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import { api } from './_generated/api'
 
 const MAP_SIZE = 1000
 const GRID_SIZE = 10 // Each territory cell is 10x10 units
@@ -102,6 +103,13 @@ export async function paintTerritoryHelper(
         
         paintedCells.push({ gridX: cellX, gridY: cellY })
       }
+    }
+    
+    // Check for territory victory if cells were painted
+    if (paintedCells.length > 0) {
+      await ctx.runMutation(api.victory.checkVictoryConditions, {
+        gameId: args.gameId,
+      })
     }
     
     return { gridX, gridY, painted: true, cellsPainted: paintedCells.length }

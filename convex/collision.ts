@@ -2,6 +2,7 @@ import { mutation } from './_generated/server'
 import { v } from 'convex/values'
 import { MutationCtx } from './_generated/server'
 import { Id } from './_generated/dataModel'
+import { api } from './_generated/api'
 
 const COLLISION_DISTANCE = 15
 const SIZE_DIFFERENCE_THRESHOLD = 5
@@ -83,6 +84,7 @@ export async function eliminatePlayer(
 
   await ctx.db.patch(loserId, {
     isAlive: false,
+    eliminatedAt: Date.now(),
   })
 
   const glowTransfer = Math.floor(loser.glowRadius * GLOW_TRANSFER_RATIO)
@@ -216,6 +218,13 @@ export async function checkCollisionsHelper(
       )
       bounces++
     }
+  }
+
+  // Check for victory conditions if there were eliminations
+  if (eliminations > 0) {
+    await ctx.runMutation(api.victory.checkVictoryConditions, {
+      gameId: args.gameId,
+    })
   }
 
   return {

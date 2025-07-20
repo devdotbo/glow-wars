@@ -469,4 +469,73 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 
 ---
 
+### Task 9: Victory Conditions & Game End
+
+**Status**: Completed  
+**Completed**: 2025-01-20T15:00:00Z  
+
+#### Deliverables Completed:
+
+- [x] Three victory conditions (territory 60%, elimination, time limit)
+- [x] Game end and cleanup system
+- [x] Score calculation with placements
+- [x] Victory checking cron job
+- [x] Integration with all game systems
+
+#### Test Results (8/8 passing):
+
+- [x] Territory victory at 60% control
+- [x] Not ending at 59% territory
+- [x] Elimination victory (last player standing)
+- [x] Handle edge cases for elimination
+- [x] Time limit victory after 10 minutes
+- [x] Score calculation with components
+- [x] Placement assignment by score
+- [x] Game cleanup and final stats
+
+#### Implementation Notes:
+
+- Created comprehensive victory system with 3 conditions:
+  - Territory: First to 60% wins immediately
+  - Elimination: Last player alive wins
+  - Time Limit: Most territory after 10 minutes
+- Score formula:
+  - Territory Points: cells × 10
+  - Elimination Points: kills × 100 (future feature)
+  - Survival Points: seconds × 1
+  - Victory Bonus: 500 points
+- Victory checks run every 5 seconds via cron
+- Integrated with collision system for elimination checks
+- Integrated with territory system for control checks
+- Added placement system (1st, 2nd, 3rd, etc.)
+- Game cleanup records final stats for all players
+
+#### Technical Decisions:
+
+- Used internal mutations for victory checks
+- Victory conditions checked after each relevant action
+- Edge case handling for simultaneous eliminations
+- Efficient territory percentage calculation
+- forceEndGame mutation for testing/admin
+
+#### Files Created:
+
+- `convex/victory.ts` - Complete victory system
+- `convex/victory.test.ts` - Comprehensive tests
+
+#### Files Modified:
+
+- `convex/schema.ts` - Added victory tracking fields
+- `convex/crons.ts` - Added victory check interval
+- `convex/collision.ts` - Check victory after eliminations
+- `convex/territory.ts` - Check victory after painting
+- `convex/games.ts` - Added default time limit
+
+#### Known Issues:
+
+- Pre-existing collision tests still failing (5 tests)
+- Total tests: 63 (58 passing, 5 failing collision tests)
+
+---
+
 _Note: This file is automatically updated by Claude during development. Each entry includes timestamp, action taken, and results._

@@ -39,4 +39,10 @@ crons.interval(
   api.powerups.cleanupOldPowerups
 )
 
+crons.interval(
+  'check victory conditions',
+  { seconds: 5 },
+  api.victory.checkAllActiveGames
+)
+
 export default crons

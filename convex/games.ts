@@ -33,6 +33,7 @@ export const createGame = mutation({
       maxPlayers: args.maxPlayers,
       mapType: args.mapType,
       createdBy: args.createdBy,
+      timeLimit: 600000, // 10 minutes default
     })
 
     // Auto-join the creator to the game

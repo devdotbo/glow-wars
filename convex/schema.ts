@@ -32,6 +32,13 @@ export default defineSchema({
     createdBy: v.id('players'),
     startedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
+    winnerId: v.optional(v.id('players')),
+    winCondition: v.optional(v.union(
+      v.literal('territory'),
+      v.literal('elimination'),
+      v.literal('time_limit'),
+    )),
+    timeLimit: v.number(), // Duration in milliseconds (default 600000 = 10 minutes)
   }).index('by_status', ['status']),
 
   gamePlayers: defineTable({
@@ -42,6 +49,10 @@ export default defineSchema({
     isAlive: v.boolean(),
     score: v.number(),
     joinedAt: v.number(),
+    finalScore: v.optional(v.number()),
+    finalTerritory: v.optional(v.number()),
+    eliminatedAt: v.optional(v.number()),
+    placement: v.optional(v.number()), // 1st, 2nd, 3rd, etc.
   })
     .index('by_game_and_player', ['gameId', 'playerId'])
     .index('by_game', ['gameId']),
