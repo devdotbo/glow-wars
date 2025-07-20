@@ -1,5 +1,6 @@
 import { mutation, query } from '../_generated/server'
 import { v } from 'convex/values'
+import { api } from '../_generated/api'
 
 export const spawnEntity = mutation({
   args: {
@@ -70,6 +71,7 @@ export const consumeEntity = mutation({
   },
   returns: v.object({
     glowBonus: v.number(),
+    powerupSpawned: v.optional(v.string()),
   }),
   handler: async (ctx, args) => {
     const entity = await ctx.db.get(args.entityId)
@@ -100,9 +102,23 @@ export const consumeEntity = mutation({
       })
     }
     
+    // Store entity position before deletion
+    const entityPosition = entity.position
+    const gameId = entity.gameId
+    
     await ctx.db.delete(args.entityId)
     
-    return { glowBonus }
+    // 30% chance to spawn a power-up
+    let powerupSpawned: string | undefined
+    if (Math.random() < 0.3) {
+      await ctx.scheduler.runAfter(0, api.powerups.spawnPowerup, {
+        gameId,
+        position: entityPosition,
+      })
+      powerupSpawned = 'random'
+    }
+    
+    return { glowBonus, powerupSpawned }
   },
 })
 

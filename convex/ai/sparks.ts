@@ -21,6 +21,21 @@ export async function detectNearbyPlayers(
   const nearbyPlayers = []
   
   for (const player of gamePlayers) {
+    // Check if player has shadow cloak effect
+    const cloakEffect = await ctx.db
+      .query('playerEffects')
+      .withIndex('by_game_and_player', (q: any) =>
+        q.eq('gameId', gameId).eq('playerId', player.playerId)
+      )
+      .filter((q: any) => q.eq(q.field('effect'), 'shadow_cloak'))
+      .filter((q: any) => q.gt(q.field('expiresAt'), Date.now()))
+      .first()
+    
+    // Skip cloaked players
+    if (cloakEffect) {
+      continue
+    }
+    
     const dx = player.position.x - position.x
     const dy = player.position.y - position.y
     const distance = Math.sqrt(dx * dx + dy * dy)

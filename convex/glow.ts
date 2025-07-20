@@ -4,6 +4,7 @@ import { v } from 'convex/values'
 const GLOW_DECAY_RATE = 1
 const MIN_GLOW_RADIUS = 10
 const MAX_GLOW_RADIUS = 100
+const MAX_HYPER_GLOW_RADIUS = 200
 const BOOST_COST = 5
 const BOOST_DURATION = 5000
 const TERRITORY_GLOW_BONUS = 0.1
@@ -30,7 +31,20 @@ export const decayGlow = mutation({
       .collect()
     
     for (const player of gamePlayers) {
-      const newGlowRadius = Math.max(MIN_GLOW_RADIUS, player.glowRadius - GLOW_DECAY_RATE)
+      // Check if player has hyper glow effect for higher cap
+      const hyperGlowEffect = await ctx.db
+        .query('playerEffects')
+        .withIndex('by_game_and_player', q =>
+          q.eq('gameId', args.gameId).eq('playerId', player.playerId)
+        )
+        .filter(q => q.eq(q.field('effect'), 'hyper_glow'))
+        .filter(q => q.gt(q.field('expiresAt'), Date.now()))
+        .first()
+      
+      const maxRadius = hyperGlowEffect ? MAX_HYPER_GLOW_RADIUS : MAX_GLOW_RADIUS
+      let newGlowRadius = Math.max(MIN_GLOW_RADIUS, player.glowRadius - GLOW_DECAY_RATE)
+      newGlowRadius = Math.min(newGlowRadius, maxRadius)
+      
       await ctx.db.patch(player._id, { glowRadius: newGlowRadius })
     }
     
@@ -206,7 +220,20 @@ export const decayAllActiveGames = mutation({
         .collect()
         .then(async (players) => {
           for (const player of players) {
-            const newGlowRadius = Math.max(MIN_GLOW_RADIUS, player.glowRadius - GLOW_DECAY_RATE)
+            // Check if player has hyper glow effect for higher cap
+            const hyperGlowEffect = await ctx.db
+              .query('playerEffects')
+              .withIndex('by_game_and_player', q =>
+                q.eq('gameId', game._id).eq('playerId', player.playerId)
+              )
+              .filter(q => q.eq(q.field('effect'), 'hyper_glow'))
+              .filter(q => q.gt(q.field('expiresAt'), Date.now()))
+              .first()
+            
+            const maxRadius = hyperGlowEffect ? MAX_HYPER_GLOW_RADIUS : MAX_GLOW_RADIUS
+            let newGlowRadius = Math.max(MIN_GLOW_RADIUS, player.glowRadius - GLOW_DECAY_RATE)
+            newGlowRadius = Math.min(newGlowRadius, maxRadius)
+            
             await ctx.db.patch(player._id, { glowRadius: newGlowRadius })
           }
         })

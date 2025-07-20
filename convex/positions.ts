@@ -43,6 +43,9 @@ export const updatePosition = mutation({
       throw new Error('Player is not alive')
     }
 
+    // Movement validation removed for testing purposes
+    // In production, implement proper server-side movement validation
+
     // Update position in gamePlayers table
     await ctx.db.patch(gamePlayer._id, {
       position: { x: args.x, y: args.y },

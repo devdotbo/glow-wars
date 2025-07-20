@@ -79,4 +79,38 @@ export default defineSchema({
   })
     .index('by_game', ['gameId'])
     .index('by_game_and_type', ['gameId', 'type']),
+
+  // Power-ups that can be collected
+  powerups: defineTable({
+    gameId: v.id('games'),
+    type: v.union(
+      v.literal('prism_shield'),
+      v.literal('nova_burst'),
+      v.literal('shadow_cloak'),
+      v.literal('hyper_glow'),
+      v.literal('speed_surge'),
+    ),
+    position: v.object({ x: v.number(), y: v.number() }),
+    spawnedAt: v.number(),
+  }).index('by_game', ['gameId']),
+
+  // Active effects on players
+  playerEffects: defineTable({
+    gameId: v.id('games'),
+    playerId: v.id('players'),
+    effect: v.union(
+      v.literal('prism_shield'),
+      v.literal('nova_burst'),
+      v.literal('shadow_cloak'),
+      v.literal('hyper_glow'),
+      v.literal('speed_surge'),
+    ),
+    expiresAt: v.number(),
+    metadata: v.optional(v.object({
+      speedMultiplier: v.optional(v.number()),
+      glowMultiplier: v.optional(v.number()),
+    })),
+  })
+    .index('by_game_and_player', ['gameId', 'playerId'])
+    .index('by_expires_at', ['expiresAt']),
 })

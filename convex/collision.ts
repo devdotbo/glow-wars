@@ -154,12 +154,57 @@ export async function checkCollisionsHelper(
     const sizeDiff = Math.abs(collision.player1.glowRadius - collision.player2.glowRadius)
 
     if (sizeDiff > SIZE_DIFFERENCE_THRESHOLD) {
+      // Check for prism shield effects
+      const player1Shield = await ctx.db
+        .query('playerEffects')
+        .withIndex('by_game_and_player', q =>
+          q.eq('gameId', args.gameId).eq('playerId', collision.player1.playerId)
+        )
+        .filter(q => q.eq(q.field('effect'), 'prism_shield'))
+        .filter(q => q.gt(q.field('expiresAt'), Date.now()))
+        .first()
+
+      const player2Shield = await ctx.db
+        .query('playerEffects')
+        .withIndex('by_game_and_player', q =>
+          q.eq('gameId', args.gameId).eq('playerId', collision.player2.playerId)
+        )
+        .filter(q => q.eq(q.field('effect'), 'prism_shield'))
+        .filter(q => q.gt(q.field('expiresAt'), Date.now()))
+        .first()
+
       if (collision.player1.glowRadius > collision.player2.glowRadius) {
-        await eliminatePlayer(ctx, collision.player2.id, collision.player1.id)
-        eliminations++
+        // Player 1 would eliminate Player 2
+        if (!player2Shield) {
+          await eliminatePlayer(ctx, collision.player2.id, collision.player1.id)
+          eliminations++
+        } else {
+          // Player 2 has shield, just bounce
+          await applyBounce(
+            ctx,
+            collision.player1.id,
+            collision.player2.id,
+            collision.player1.position,
+            collision.player2.position
+          )
+          bounces++
+        }
       } else {
-        await eliminatePlayer(ctx, collision.player1.id, collision.player2.id)
-        eliminations++
+        // Player 2 would eliminate Player 1
+        if (!player1Shield) {
+          await eliminatePlayer(ctx, collision.player1.id, collision.player2.id)
+          eliminations++
+        } else {
+          // Player 1 has shield, just bounce
+          await applyBounce(
+            ctx,
+            collision.player1.id,
+            collision.player2.id,
+            collision.player1.position,
+            collision.player2.position
+          )
+          bounces++
+        }
       }
     } else {
       await applyBounce(

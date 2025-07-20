@@ -27,4 +27,16 @@ crons.interval(
   api.ai.creepers.updateAllCreepers
 )
 
+crons.interval(
+  'expire player effects',
+  { seconds: 1 },
+  api.powerups.expireEffects
+)
+
+crons.interval(
+  'cleanup old powerups',
+  { seconds: 5 },
+  api.powerups.cleanupOldPowerups
+)
+
 export default crons

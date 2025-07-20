@@ -1,5 +1,6 @@
 import { mutation } from '../_generated/server'
 import { v } from 'convex/values'
+import { api } from '../_generated/api'
 
 const CREEPER_DETECTION_RADIUS = 100
 const CREEPER_SPEED = 3
@@ -58,6 +59,21 @@ export async function detectPlayersInDarkness(
   const nearbyPlayers = []
   
   for (const player of gamePlayers) {
+    // Check if player has shadow cloak effect
+    const cloakEffect = await ctx.db
+      .query('playerEffects')
+      .withIndex('by_game_and_player', (q: any) =>
+        q.eq('gameId', gameId).eq('playerId', player.playerId)
+      )
+      .filter((q: any) => q.eq(q.field('effect'), 'shadow_cloak'))
+      .filter((q: any) => q.gt(q.field('expiresAt'), Date.now()))
+      .first()
+    
+    // Skip cloaked players
+    if (cloakEffect) {
+      continue
+    }
+    
     const dx = player.position.x - position.x
     const dy = player.position.y - position.y
     const distance = Math.sqrt(dx * dx + dy * dy)
@@ -199,6 +215,14 @@ export async function updateCreeperBehaviorHelper(
             glowRadius: newGlow,
           })
           playersHit++
+          
+          // 20% chance to spawn a power-up when damaging a player
+          if (Math.random() < 0.2) {
+            await ctx.scheduler.runAfter(0, api.powerups.spawnPowerup, {
+              gameId: args.gameId,
+              position: creeper.position,
+            })
+          }
         }
       }
       
