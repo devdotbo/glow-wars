@@ -51,8 +51,18 @@ This is a full-stack TypeScript application using:
 
 ## Convex Guidelines
 
-The project follows specific Convex patterns (from `.cursor/rules/convex_rules.mdc`):
+For comprehensive Convex development guidelines, best practices, and examples, refer to:
+**`docs/convex.md`**
 
+This file contains:
+- Complete function syntax and validators documentation
+- Schema design patterns and best practices
+- TypeScript guidelines for Convex
+- Query, mutation, and action patterns
+- File storage, pagination, and search guidelines
+- Full example implementations
+
+Key highlights:
 1. **Function Syntax**: Always use the new function syntax with explicit validators
 2. **Validators**: Use proper validators for all arguments and return types (e.g., `v.id("tableName")`, `v.string()`)
 3. **Indexes**: Name indexes descriptively including all fields (e.g., "by_channel_and_user")
