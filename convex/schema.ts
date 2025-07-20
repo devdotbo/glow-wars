@@ -39,7 +39,10 @@ export default defineSchema({
       v.literal('time_limit'),
     )),
     timeLimit: v.number(), // Duration in milliseconds (default 600000 = 10 minutes)
-  }).index('by_status', ['status']),
+    lastActivity: v.optional(v.number()), // For smart scheduling optimization
+  })
+    .index('by_status', ['status'])
+    .index('by_status_and_activity', ['status', 'lastActivity']),
 
   gamePlayers: defineTable({
     gameId: v.id('games'),
@@ -123,5 +126,6 @@ export default defineSchema({
     })),
   })
     .index('by_game_and_player', ['gameId', 'playerId'])
-    .index('by_expires_at', ['expiresAt']),
+    .index('by_expires_at', ['expiresAt'])
+    .index('by_game', ['gameId']), // For efficient batch effect queries
 })

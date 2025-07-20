@@ -1,6 +1,7 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import { api } from './_generated/api'
+import { batchGetTerritoryCells } from './optimizations/batch'
 
 const MAP_SIZE = 1000
 const GRID_SIZE = 10 // Each territory cell is 10x10 units
@@ -58,7 +59,8 @@ export async function paintTerritoryHelper(
       paintRadius = 0
     }
     
-    const paintedCells = []
+    // Calculate all cells to paint first
+    const cellsToPaint = []
     
     // Paint cells in radius around position
     for (let dx = -paintRadius; dx <= paintRadius; dx++) {
@@ -76,33 +78,47 @@ export async function paintTerritoryHelper(
           continue
         }
         
-        // Check if territory cell already exists
-        const existingTerritory = await ctx.db
-          .query('territory')
-          .withIndex('by_game_and_position', (q: any) =>
-            q.eq('gameId', args.gameId).eq('gridX', cellX).eq('gridY', cellY)
-          )
-          .unique()
-        
-        if (existingTerritory) {
-          // Update existing territory
-          await ctx.db.patch(existingTerritory._id, {
-            ownerId: args.playerId,
-            paintedAt: Date.now(),
-          })
-        } else {
-          // Create new territory cell
-          await ctx.db.insert('territory', {
-            gameId: args.gameId,
-            gridX: cellX,
-            gridY: cellY,
-            ownerId: args.playerId,
-            paintedAt: Date.now(),
-          })
-        }
-        
-        paintedCells.push({ gridX: cellX, gridY: cellY })
+        cellsToPaint.push({ gridX: cellX, gridY: cellY })
       }
+    }
+    
+    // Batch fetch existing territories
+    const existingTerritories = await ctx.db
+      .query('territory')
+      .withIndex('by_game', (q: any) => q.eq('gameId', args.gameId))
+      .collect()
+    
+    // Create lookup map
+    const territoryMap = new Map(
+      existingTerritories.map(t => [`${t.gridX},${t.gridY}`, t])
+    )
+    
+    const paintTime = Date.now()
+    const paintedCells = []
+    
+    // Batch update/insert territories
+    for (const cell of cellsToPaint) {
+      const key = `${cell.gridX},${cell.gridY}`
+      const existing = territoryMap.get(key)
+      
+      if (existing) {
+        // Update existing territory
+        await ctx.db.patch(existing._id, {
+          ownerId: args.playerId,
+          paintedAt: paintTime,
+        })
+      } else {
+        // Create new territory cell
+        await ctx.db.insert('territory', {
+          gameId: args.gameId,
+          gridX: cell.gridX,
+          gridY: cell.gridY,
+          ownerId: args.playerId,
+          paintedAt: paintTime,
+        })
+      }
+      
+      paintedCells.push(cell)
     }
     
     // Check for territory victory if cells were painted

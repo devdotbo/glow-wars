@@ -3,6 +3,7 @@ import { v } from 'convex/values'
 import { MutationCtx } from './_generated/server'
 import { Id } from './_generated/dataModel'
 import { api } from './_generated/api'
+import { detectCollisionPairs } from './optimizations/spatial'
 
 const COLLISION_DISTANCE = 15
 const SIZE_DIFFERENCE_THRESHOLD = 5
@@ -35,37 +36,33 @@ export async function detectPlayerCollisions(
     .filter(q => q.eq(q.field('isAlive'), true))
     .collect()
 
-  const collisions: CollisionPair[] = []
-
-  for (let i = 0; i < alivePlayers.length; i++) {
-    for (let j = i + 1; j < alivePlayers.length; j++) {
-      const player1 = alivePlayers[i]
-      const player2 = alivePlayers[j]
-
-      const distance = Math.sqrt(
-        Math.pow(player1.position.x - player2.position.x, 2) +
-        Math.pow(player1.position.y - player2.position.y, 2)
-      )
-
-      if (distance <= COLLISION_DISTANCE) {
-        collisions.push({
-          player1: {
-            id: player1._id,
-            playerId: player1.playerId,
-            position: player1.position,
-            glowRadius: player1.glowRadius,
-          },
-          player2: {
-            id: player2._id,
-            playerId: player2.playerId,
-            position: player2.position,
-            glowRadius: player2.glowRadius,
-          },
-          distance,
-        })
-      }
-    }
-  }
+  // Use spatial partitioning for efficient collision detection
+  // Map to expected format for spatial partitioning
+  const entities = alivePlayers.map(player => ({
+    id: player._id,
+    position: player.position,
+    glowRadius: player.glowRadius,
+    playerId: player.playerId,
+  }))
+  
+  const collisionPairs = detectCollisionPairs(entities, COLLISION_DISTANCE)
+  
+  // Convert to expected format
+  const collisions: CollisionPair[] = collisionPairs.map(pair => ({
+    player1: {
+      id: pair.entity1.id,
+      playerId: (pair.entity1 as any).playerId,
+      position: pair.entity1.position,
+      glowRadius: (pair.entity1 as any).glowRadius,
+    },
+    player2: {
+      id: pair.entity2.id,
+      playerId: (pair.entity2 as any).playerId,
+      position: pair.entity2.position,
+      glowRadius: (pair.entity2 as any).glowRadius,
+    },
+    distance: pair.distance,
+  }))
 
   return collisions
 }
@@ -152,28 +149,25 @@ export async function checkCollisionsHelper(
   let eliminations = 0
   let bounces = 0
 
+  // Batch fetch all prism shield effects for the game
+  const now = Date.now()
+  const prismShields = await ctx.db
+    .query('playerEffects')
+    .withIndex('by_game', q => q.eq('gameId', args.gameId))
+    .filter(q => q.eq(q.field('effect'), 'prism_shield'))
+    .filter(q => q.gt(q.field('expiresAt'), now))
+    .collect()
+  
+  // Create a map for quick lookup
+  const shieldedPlayers = new Set(prismShields.map(e => e.playerId))
+
   for (const collision of collisionPairs) {
     const sizeDiff = Math.abs(collision.player1.glowRadius - collision.player2.glowRadius)
 
     if (sizeDiff > SIZE_DIFFERENCE_THRESHOLD) {
-      // Check for prism shield effects
-      const player1Shield = await ctx.db
-        .query('playerEffects')
-        .withIndex('by_game_and_player', q =>
-          q.eq('gameId', args.gameId).eq('playerId', collision.player1.playerId)
-        )
-        .filter(q => q.eq(q.field('effect'), 'prism_shield'))
-        .filter(q => q.gt(q.field('expiresAt'), Date.now()))
-        .first()
-
-      const player2Shield = await ctx.db
-        .query('playerEffects')
-        .withIndex('by_game_and_player', q =>
-          q.eq('gameId', args.gameId).eq('playerId', collision.player2.playerId)
-        )
-        .filter(q => q.eq(q.field('effect'), 'prism_shield'))
-        .filter(q => q.gt(q.field('expiresAt'), Date.now()))
-        .first()
+      // Check for prism shield effects using cached data
+      const player1Shield = shieldedPlayers.has(collision.player1.playerId)
+      const player2Shield = shieldedPlayers.has(collision.player2.playerId)
 
       if (collision.player1.glowRadius > collision.player2.glowRadius) {
         // Player 1 would eliminate Player 2

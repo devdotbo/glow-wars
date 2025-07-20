@@ -1,5 +1,9 @@
 import { mutation } from '../_generated/server'
 import { v } from 'convex/values'
+import { api } from '../_generated/api'
+import { getCachedGameData } from '../optimizations/cache'
+import { batchUpdateAIEntities } from '../optimizations/batch'
+import { getEntitiesInRange, buildSpatialIndex } from '../optimizations/spatial'
 
 const SPARK_DETECTION_RADIUS = 50
 const SPARK_SPEED = 2
@@ -10,29 +14,44 @@ const MAP_SIZE = 1000
 export async function detectNearbyPlayers(
   ctx: any,
   gameId: any,
-  position: { x: number; y: number }
-): Promise<{ playerId: any; distance: number }[]> {
-  const gamePlayers = await ctx.db
-    .query('gamePlayers')
-    .withIndex('by_game', (q: any) => q.eq('gameId', gameId))
-    .filter((q: any) => q.eq(q.field('isAlive'), true))
-    .collect()
+  position: { x: number; y: number },
+  cachedPlayers?: Array<{
+    playerId: any
+    gamePlayerId: any
+    position: { x: number; y: number }
+    glowRadius: number
+    hasShadowCloak: boolean
+  }>
+): Promise<{ playerId: any; gamePlayerId: any; distance: number }[]> {
+  // Use cached players if provided, otherwise fetch
+  let players = cachedPlayers
+  if (!players) {
+    const gameData = await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+      gameId,
+    })
+    players = gameData.alivePlayers
+  }
+  
+  // Build spatial index for efficient range queries
+  const spatialIndex = buildSpatialIndex(players.map(p => ({
+    id: p.gamePlayerId,
+    position: p.position,
+  })))
+  
+  // Get players in range using spatial partitioning
+  const playersInRange = getEntitiesInRange(position, SPARK_DETECTION_RADIUS, spatialIndex)
+  const playerIdSet = new Set(playersInRange.map(p => p.id))
   
   const nearbyPlayers = []
   
-  for (const player of gamePlayers) {
-    // Check if player has shadow cloak effect
-    const cloakEffect = await ctx.db
-      .query('playerEffects')
-      .withIndex('by_game_and_player', (q: any) =>
-        q.eq('gameId', gameId).eq('playerId', player.playerId)
-      )
-      .filter((q: any) => q.eq(q.field('effect'), 'shadow_cloak'))
-      .filter((q: any) => q.gt(q.field('expiresAt'), Date.now()))
-      .first()
+  for (const player of players) {
+    // Skip players not in range
+    if (!playerIdSet.has(player.gamePlayerId)) {
+      continue
+    }
     
     // Skip cloaked players
-    if (cloakEffect) {
+    if (player.hasShadowCloak) {
       continue
     }
     
@@ -40,12 +59,11 @@ export async function detectNearbyPlayers(
     const dy = player.position.y - position.y
     const distance = Math.sqrt(dx * dx + dy * dy)
     
-    if (distance <= SPARK_DETECTION_RADIUS) {
-      nearbyPlayers.push({
-        playerId: player.playerId,
-        distance,
-      })
-    }
+    nearbyPlayers.push({
+      playerId: player.playerId,
+      gamePlayerId: player.gamePlayerId,
+      distance,
+    })
   }
   
   return nearbyPlayers.sort((a, b) => a.distance - b.distance)
@@ -96,32 +114,38 @@ export async function updateSparkBehaviorHelper(
   ctx: any,
   args: { gameId: any }
 ): Promise<{ updated: number; consumed: number }> {
-    const sparks = await ctx.db
-      .query('aiEntities')
-      .withIndex('by_game_and_type', (q: any) =>
-        q.eq('gameId', args.gameId).eq('type', 'spark')
-      )
-      .collect()
+    // Get all game data in one query
+    const gameData = await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+      gameId: args.gameId,
+    })
     
-    let updated = 0
+    const sparks = gameData.aiEntities.sparks
+    const players = gameData.alivePlayers
+    
+    // Create player lookup map
+    const playerMap = new Map(
+      players.map(p => [p.playerId, p])
+    )
+    
     let consumed = 0
+    const updates = []
     
     for (const spark of sparks) {
-      const nearbyPlayers = await detectNearbyPlayers(ctx, args.gameId, spark.position)
+      const nearbyPlayers = await detectNearbyPlayers(
+        ctx,
+        args.gameId,
+        spark.position,
+        players // Pass cached players
+      )
       
       if (nearbyPlayers.length > 0 && nearbyPlayers[0].distance < SPARK_CONSUME_DISTANCE) {
-        const gamePlayer = await ctx.db
-          .query('gamePlayers')
-          .withIndex('by_game_and_player', (q: any) =>
-            q.eq('gameId', args.gameId).eq('playerId', nearbyPlayers[0].playerId)
-          )
-          .unique()
+        const gamePlayer = playerMap.get(nearbyPlayers[0].playerId)
         
-        if (gamePlayer && gamePlayer.isAlive) {
-          await ctx.db.patch(gamePlayer._id, {
+        if (gamePlayer) {
+          await ctx.db.patch(gamePlayer.gamePlayerId, {
             glowRadius: Math.min(100, gamePlayer.glowRadius + 5),
           })
-          await ctx.db.delete(spark._id)
+          await ctx.db.delete(spark.id)
           consumed++
           continue
         }
@@ -135,17 +159,11 @@ export async function updateSparkBehaviorHelper(
         newState = 'flee'
         targetId = nearbyPlayers[0].playerId
         
-        const player = nearbyPlayers[0]
-        const gamePlayer = await ctx.db
-          .query('gamePlayers')
-          .withIndex('by_game_and_player', (q: any) =>
-            q.eq('gameId', args.gameId).eq('playerId', player.playerId)
-          )
-          .unique()
+        const player = playerMap.get(nearbyPlayers[0].playerId)
         
-        if (gamePlayer) {
-          const dx = spark.position.x - gamePlayer.position.x
-          const dy = spark.position.y - gamePlayer.position.y
+        if (player) {
+          const dx = spark.position.x - player.position.x
+          const dy = spark.position.y - player.position.y
           const distance = Math.sqrt(dx * dx + dy * dy)
           
           if (distance > 0) {
@@ -168,13 +186,22 @@ export async function updateSparkBehaviorHelper(
         newPosition.y = Math.max(10, Math.min(MAP_SIZE - 10, spark.position.y + moveY))
       }
       
-      await ctx.db.patch(spark._id, {
+      // Collect update for batch processing
+      updates.push({
+        entityId: spark.id,
         position: newPosition,
         state: newState,
-        targetId,
+        targetId: targetId,
       })
-      
-      updated++
+    }
+    
+    // Batch update all sparks
+    let updated = 0
+    if (updates.length > 0) {
+      const result = await ctx.runMutation(api.optimizations.batch.batchUpdateAIEntities, {
+        updates,
+      })
+      updated = result.updated
     }
     
     return { updated, consumed }
