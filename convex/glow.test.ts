@@ -136,12 +136,10 @@ describe('Glow System', () => {
     
     // Get painting speed calculation
     const normalSpeed = await t.query(api.glow.calculatePaintingSpeed, {
-      gameId,
-      playerId,
+      glowRadius: 50,
     })
     
-    expect(normalSpeed.radius).toBe(2) // Base radius at 50 glow
-    expect(normalSpeed.efficiency).toBe(1.0) // Normal efficiency
+    expect(normalSpeed).toBe(2) // Base radius at 50 glow
     
     // Decay glow to minimum
     const player2Id = await t.mutation(api.players.createPlayer, {
@@ -156,12 +154,10 @@ describe('Glow System', () => {
     }
     
     const minSpeed = await t.query(api.glow.calculatePaintingSpeed, {
-      gameId,
-      playerId,
+      glowRadius: 10,
     })
     
-    expect(minSpeed.radius).toBe(1) // Minimum radius
-    expect(minSpeed.efficiency).toBe(0.5) // Reduced efficiency
+    expect(minSpeed).toBe(0) // No radius at minimum glow
   })
   
   test('should replenish glow from territory ownership', async () => {
@@ -205,7 +201,7 @@ describe('Glow System', () => {
     const initialGlow = beforeReplenish.find(p => p.playerId === playerId)!.glowRadius
     
     // Replenish glow based on territory
-    await t.mutation(api.glow.replenishGlow, { gameId })
+    await t.mutation(api.glow.replenishGlow, { gameId, playerId })
     
     // Check glow increased based on territory ownership
     const afterReplenish = await t.query(api.games.getGamePlayers, { gameId })

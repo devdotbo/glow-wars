@@ -13,10 +13,16 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as ai_entities from "../ai/entities.js";
+import type * as ai_sparks from "../ai/sparks.js";
+import type * as crons from "../crons.js";
 import type * as games from "../games.js";
+import type * as glow from "../glow.js";
 import type * as players from "../players.js";
+import type * as positions from "../positions.js";
 import type * as posts from "../posts.js";
 import type * as tasks from "../tasks.js";
+import type * as territory from "../territory.js";
 import type * as testingFunctions from "../testingFunctions.js";
 import type * as user from "../user.js";
 
@@ -29,10 +35,16 @@ import type * as user from "../user.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "ai/entities": typeof ai_entities;
+  "ai/sparks": typeof ai_sparks;
+  crons: typeof crons;
   games: typeof games;
+  glow: typeof glow;
   players: typeof players;
+  positions: typeof positions;
   posts: typeof posts;
   tasks: typeof tasks;
+  territory: typeof territory;
   testingFunctions: typeof testingFunctions;
   user: typeof user;
 }>;

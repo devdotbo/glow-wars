@@ -21,4 +21,10 @@ crons.interval(
   api.collision.checkAllActiveGames
 )
 
+crons.interval(
+  'update AI creeper behavior',
+  { seconds: 1 },
+  api.ai.creepers.updateAllCreepers
+)
+
 export default crons

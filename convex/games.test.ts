@@ -4,7 +4,7 @@ import { api } from './_generated/api'
 import schema from './schema'
 
 // Import modules explicitly for convex-test in edge-runtime
-const modules = import.meta.glob('./**/*.{js,ts}', {
+const modules = (import.meta as any).glob('./**/*.{js,ts}', {
   eager: false,
 })
 

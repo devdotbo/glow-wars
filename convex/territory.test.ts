@@ -4,7 +4,7 @@ import { api } from './_generated/api'
 import schema from './schema'
 
 // Import modules explicitly for convex-test in edge-runtime
-const modules = import.meta.glob('./**/*.{js,ts}', {
+const modules = (import.meta as any).glob('./**/*.{js,ts}', {
   eager: false,
 })
 
@@ -42,20 +42,21 @@ describe('Territory System', () => {
     })
     
     // Expected grid coordinates for position (155, 255) with grid size 10
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       gridX: 15,
       gridY: 25,
       painted: true,
     })
+    // With initial glow radius of 50, should paint 13 cells (radius 2)
+    expect(result.cellsPainted).toBe(13)
     
     // Verify territory was created
     const territoryMap = await t.query(api.territory.getTerritoryMap, { gameId })
-    expect(territoryMap).toHaveLength(1)
-    expect(territoryMap[0]).toMatchObject({
-      gridX: 15,
-      gridY: 25,
-      ownerId: playerId,
-    })
+    expect(territoryMap).toHaveLength(13) // Should match cellsPainted
+    // Check that the center cell (15, 25) was painted
+    const centerCell = territoryMap.find(t => t.gridX === 15 && t.gridY === 25)
+    expect(centerCell).toBeDefined()
+    expect(centerCell!.ownerId).toBe(playerId)
   })
 
   test('should overwrite existing territory', async () => {
@@ -106,12 +107,12 @@ describe('Territory System', () => {
     
     // Verify territory was overwritten
     const territory2 = await t.query(api.territory.getTerritoryMap, { gameId })
-    expect(territory2).toHaveLength(1)
-    expect(territory2[0]).toMatchObject({
-      gridX: 10,
-      gridY: 10,
-      ownerId: player2Id,
-    })
+    // With glow radius painting, multiple cells are painted
+    expect(territory2.length).toBeGreaterThan(1)
+    // Check that the center cell (10, 10) belongs to player2
+    const centerCell = territory2.find(t => t.gridX === 10 && t.gridY === 10)
+    expect(centerCell).toBeDefined()
+    expect(centerCell!.ownerId).toBe(player2Id)
     expect(territory2[0].paintedAt).toBeGreaterThan(firstPaintTime)
   })
 
@@ -177,20 +178,17 @@ describe('Territory System', () => {
     
     expect(stats).toMatchObject({
       totalCells: 10000, // 100x100 grid
-      paintedCells: 5,
-      playerStats: [
-        {
-          playerId: player1Id,
-          cellCount: 3,
-          percentage: 0.03, // 3/10000 * 100
-        },
-        {
-          playerId: player2Id,
-          cellCount: 2,
-          percentage: 0.02, // 2/10000 * 100
-        },
-      ],
     })
+    // With glow radius painting, more cells are painted
+    expect(stats.paintedCells).toBeGreaterThan(5)
+    
+    // Check player percentages
+    expect(stats.playerStats).toHaveLength(2)
+    // Players should have painted multiple cells due to glow radius
+    const player1Stats = stats.playerStats.find(s => s.playerId === player1Id)
+    const player2Stats = stats.playerStats.find(s => s.playerId === player2Id)
+    expect(player1Stats!.cellCount).toBeGreaterThan(2)
+    expect(player2Stats!.cellCount).toBeGreaterThan(1)
   })
 
   test('should automatically paint territory when position updates', async () => {
@@ -226,12 +224,12 @@ describe('Territory System', () => {
     
     // Verify territory was painted
     const territoryMap = await t.query(api.territory.getTerritoryMap, { gameId })
-    expect(territoryMap).toHaveLength(1)
-    expect(territoryMap[0]).toMatchObject({
-      gridX: 7,
-      gridY: 8,
-      ownerId: playerId,
-    })
+    // With glow radius painting, multiple cells are painted
+    expect(territoryMap.length).toBeGreaterThan(1)
+    // Check that the center cell (7, 8) was painted
+    const centerCell = territoryMap.find(t => t.gridX === 7 && t.gridY === 8)
+    expect(centerCell).toBeDefined()
+    expect(centerCell!.ownerId).toBe(playerId)
   })
 
   test('should handle concurrent territory painting', async () => {
@@ -291,9 +289,11 @@ describe('Territory System', () => {
     
     // Verify all territories were painted
     const territoryMap = await t.query(api.territory.getTerritoryMap, { gameId })
-    expect(territoryMap).toHaveLength(3)
+    // With glow radius painting, many more cells are painted
+    expect(territoryMap.length).toBeGreaterThan(3)
     
     const gridPositions = territoryMap.map((t) => `${t.gridX},${t.gridY}`)
+    // Check that center positions were painted
     expect(gridPositions).toContain('10,10')
     expect(gridPositions).toContain('20,20')
     expect(gridPositions).toContain('30,30')

@@ -36,3 +36,4 @@ yarn.lock
 /playwright/.cache/
 
 app.config.timestamp_*.js
+.aider*

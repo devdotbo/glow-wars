@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document breaks down the Glow Wars game implementation into atomic, committable tasks. Each task is designed to use less than 10k tokens and includes comprehensive testing with real Convex functions (no mocks).
+This document breaks down the Glow Wars game implementation into atomic, committable tasks. Each task includes comprehensive testing with convex-test mock backend.
 
 ## Implementation Philosophy
 
@@ -15,7 +15,6 @@ This document breaks down the Glow Wars game implementation into atomic, committ
 
 ### Task 1: Core Database Schema & Player Management
 
-**Token Estimate**: ~3k tokens  
 **Dependencies**: None  
 **Deliverables**:
 
@@ -69,7 +68,6 @@ gamePlayers: {
 
 ### Task 2: Game Session Management
 
-**Token Estimate**: ~4k tokens  
 **Dependencies**: Task 1  
 **Deliverables**:
 
@@ -102,7 +100,6 @@ gamePlayers: {
 
 ### Task 3: Real-time Position Updates & Territory System
 
-**Token Estimate**: ~5k tokens  
 **Dependencies**: Tasks 1-2  
 **Deliverables**:
 
@@ -148,7 +145,6 @@ territory: {
 
 ### Task 4: Glow System & Resource Management
 
-**Token Estimate**: ~3k tokens  
 **Dependencies**: Tasks 1-3  
 **Deliverables**:
 
@@ -179,7 +175,6 @@ territory: {
 
 ### Task 5: Basic AI Entity System (Sparks)
 
-**Token Estimate**: ~5k tokens  
 **Dependencies**: Tasks 1-4  
 **Deliverables**:
 
@@ -218,7 +213,6 @@ aiEntities: {
 
 ### Task 6: Collision Detection & Player Elimination
 
-**Token Estimate**: ~4k tokens  
 **Dependencies**: Tasks 1-5  
 **Deliverables**:
 
@@ -244,7 +238,6 @@ aiEntities: {
 
 ### Task 7: Advanced AI - Shadow Creepers
 
-**Token Estimate**: ~4k tokens  
 **Dependencies**: Tasks 1-6  
 **Deliverables**:
 
@@ -269,7 +262,6 @@ aiEntities: {
 
 ### Task 8: Power-up System
 
-**Token Estimate**: ~4k tokens  
 **Dependencies**: Tasks 1-7  
 **Deliverables**:
 
@@ -312,7 +304,6 @@ playerEffects: {
 
 ### Task 9: Victory Conditions & Game End
 
-**Token Estimate**: ~3k tokens  
 **Dependencies**: Tasks 1-8  
 **Deliverables**:
 
@@ -337,7 +328,6 @@ playerEffects: {
 
 ### Task 10: Performance Optimizations
 
-**Token Estimate**: ~3k tokens  
 **Dependencies**: Tasks 1-9  
 **Deliverables**:
 
@@ -388,16 +378,6 @@ Each test file follows this pattern:
 4. **Implement Functions** to pass tests
 5. **Run All Tests** to ensure no regressions
 6. **Commit** with descriptive message
-
-## Token Usage Guidelines
-
-To stay under 10k tokens per task:
-
-- Focus on one feature at a time
-- Reuse existing utilities
-- Keep tests focused and concise
-- Avoid over-engineering
-- Comment only critical logic
 
 ## Success Metrics
 

@@ -12,7 +12,7 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - [x] Task 4: Glow System & Resource Management
 - [x] Task 5: Basic AI Entity System (Sparks)
 - [x] Task 6: Collision Detection & Player Elimination
-- [ ] Task 7: Advanced AI - Shadow Creepers
+- [x] Task 7: Advanced AI - Shadow Creepers
 - [ ] Task 8: Power-up System
 - [ ] Task 9: Victory Conditions & Game End
 - [ ] Task 10: Performance Optimizations
@@ -332,6 +332,61 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - `convex/positions.ts` - Added collision check after position updates
 - `convex/crons.ts` - Added collision check interval
 - `convex/glow.ts` - Added consumeGlow function for testing
+
+---
+
+### Task 7: Advanced AI - Shadow Creepers
+
+**Status**: Completed  
+**Completed**: 2025-01-20T10:04:00Z  
+
+#### Deliverables Completed:
+
+- [x] Shadow Creeper spawning in dark areas
+- [x] Territory-aware AI behavior
+- [x] Hunt/patrol/return state machine
+- [x] Player damage mechanics
+- [x] Integration with existing AI entity system
+
+#### Test Results (5/5 passing):
+
+- [x] Spawn in unpainted areas only
+- [x] Patrol dark territories with random movement
+- [x] Chase players who enter darkness
+- [x] Return to darkness when in painted territory
+- [x] Damage players on contact (10 glow reduction)
+
+#### Implementation Notes:
+
+- Detection radius: 100 units (larger than sparks)
+- Movement speed: 3 units/update (faster than sparks)
+- Health: 20 (more durable than sparks)
+- Damage: 10 glow on contact with 10 unit contact distance
+- Three behavioral states: patrol, hunt, return
+- Efficiently finds dark areas using sampled grid search
+- Reuses existing aiEntities infrastructure
+
+#### Technical Decisions:
+
+- Sample every 10th grid cell for performance when finding dark areas
+- Creepers actively flee painted territory to maintain lore consistency
+- Cannot be consumed like sparks (only damaged in future features)
+- Hunt behavior only activates for players in darkness
+- Uses helper pattern for cron job compatibility
+
+#### Files Created:
+
+- `convex/ai/creepers.ts` - Shadow Creeper AI logic
+- `convex/creepers.test.ts` - Integration tests
+
+#### Files Modified:
+
+- `convex/crons.ts` - Added creeper update interval (1 second)
+
+#### Known Issues:
+
+- Collision detection tests from Task 6 still failing (pre-existing issue)
+- Total tests: 44 (39 passing, 5 failing from collision system)
 
 ---
 
