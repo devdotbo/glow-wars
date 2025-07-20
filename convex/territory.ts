@@ -36,7 +36,7 @@ export async function paintTerritoryHelper(
     // Verify player is in game and alive
     const gamePlayer = await ctx.db
       .query('gamePlayers')
-      .withIndex('by_game_and_player', (q) =>
+      .withIndex('by_game_and_player', (q: any) =>
         q.eq('gameId', args.gameId).eq('playerId', args.playerId)
       )
       .unique()
@@ -45,32 +45,66 @@ export async function paintTerritoryHelper(
       throw new Error('Player is not in game or not alive')
     }
     
-    // Check if territory cell already exists
-    const existingTerritory = await ctx.db
-      .query('territory')
-      .withIndex('by_game_and_position', (q) =>
-        q.eq('gameId', args.gameId).eq('gridX', gridX).eq('gridY', gridY)
-      )
-      .unique()
+    // Calculate painting radius based on glow
+    const glowRadius = gamePlayer.glowRadius
+    let paintRadius = 0
     
-    if (existingTerritory) {
-      // Update existing territory
-      await ctx.db.patch(existingTerritory._id, {
-        ownerId: args.playerId,
-        paintedAt: Date.now(),
-      })
-      return { gridX, gridY, painted: true }
+    if (glowRadius >= 50) {
+      paintRadius = 2
+    } else if (glowRadius >= 30) {
+      paintRadius = 1
     } else {
-      // Create new territory cell
-      await ctx.db.insert('territory', {
-        gameId: args.gameId,
-        gridX,
-        gridY,
-        ownerId: args.playerId,
-        paintedAt: Date.now(),
-      })
-      return { gridX, gridY, painted: true }
+      paintRadius = 0
     }
+    
+    const paintedCells = []
+    
+    // Paint cells in radius around position
+    for (let dx = -paintRadius; dx <= paintRadius; dx++) {
+      for (let dy = -paintRadius; dy <= paintRadius; dy++) {
+        const cellX = gridX + dx
+        const cellY = gridY + dy
+        
+        // Skip cells outside grid bounds
+        if (cellX < 0 || cellX >= GRID_CELLS || cellY < 0 || cellY >= GRID_CELLS) {
+          continue
+        }
+        
+        // Check if within circular radius
+        if (dx * dx + dy * dy > paintRadius * paintRadius) {
+          continue
+        }
+        
+        // Check if territory cell already exists
+        const existingTerritory = await ctx.db
+          .query('territory')
+          .withIndex('by_game_and_position', (q: any) =>
+            q.eq('gameId', args.gameId).eq('gridX', cellX).eq('gridY', cellY)
+          )
+          .unique()
+        
+        if (existingTerritory) {
+          // Update existing territory
+          await ctx.db.patch(existingTerritory._id, {
+            ownerId: args.playerId,
+            paintedAt: Date.now(),
+          })
+        } else {
+          // Create new territory cell
+          await ctx.db.insert('territory', {
+            gameId: args.gameId,
+            gridX: cellX,
+            gridY: cellY,
+            ownerId: args.playerId,
+            paintedAt: Date.now(),
+          })
+        }
+        
+        paintedCells.push({ gridX: cellX, gridY: cellY })
+      }
+    }
+    
+    return { gridX, gridY, painted: true, cellsPainted: paintedCells.length }
 }
 
 export const paintTerritory = mutation({
