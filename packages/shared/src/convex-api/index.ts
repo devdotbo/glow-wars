@@ -14,10 +14,15 @@ export function createConvexClients(convexUrl: string): ConvexClients {
   // Create Convex client
   const convexClient = new ConvexReactClient(convexUrl)
 
-  // Create query client for caching
+  // Bridge Convex with React Query
+  const convexQueryClient = new ConvexQueryClient(convexClient)
+
+  // Create query client with Convex integration
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
+        queryKeyHashFn: convexQueryClient.hashFn(),
+        queryFn: convexQueryClient.queryFn(),
         staleTime: 5000,
         refetchInterval: false,
         retry: 3,
@@ -25,8 +30,7 @@ export function createConvexClients(convexUrl: string): ConvexClients {
     },
   })
 
-  // Bridge Convex with React Query
-  const convexQueryClient = new ConvexQueryClient(convexClient)
+  // Connect the clients
   convexQueryClient.connect(queryClient)
 
   return {

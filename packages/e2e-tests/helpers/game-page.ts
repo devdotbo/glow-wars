@@ -9,15 +9,15 @@ export class GamePage {
   }
 
   get createGameButton() {
-    return this.page.locator('button:has-text("Create Game")')
+    return this.page.locator('[data-testid="create-game-button"]')
   }
 
   get joinGameButton() {
-    return this.page.locator('button:has-text("Join Game")')
+    return this.page.locator('[data-testid="join-game-button"]')
   }
 
   get startGameButton() {
-    return this.page.locator('button:has-text("Start Game")')
+    return this.page.locator('[data-testid="start-game-button"]')
   }
 
   get gameCanvas() {
@@ -46,17 +46,18 @@ export class GamePage {
 
   // Actions
   async createGame(maxPlayers: number = 4) {
-    await this.createGameButton.click()
     await this.maxPlayersSelect.selectOption(String(maxPlayers))
-    await this.page.locator('button:has-text("Create")').click()
-    await this.page.waitForURL('**/game/**')
+    await this.createGameButton.click()
+    // Wait for game lobby UI to appear
+    await this.gameIdDisplay.waitFor({ state: 'visible', timeout: 10000 })
   }
 
   async joinGame(gameId: string) {
     // Select the game from available games
     await this.availableGamesList.locator(`[data-game-id="${gameId}"]`).click()
     await this.joinGameButton.click()
-    await this.page.waitForURL(`**/game/${gameId}`)
+    // Wait for game lobby UI to appear
+    await this.gameIdDisplay.waitFor({ state: 'visible', timeout: 10000 })
   }
 
   async waitForPlayersCount(count: number) {
@@ -80,7 +81,9 @@ export class GamePage {
 
   async getGameId(): Promise<string> {
     const gameIdText = await this.gameIdDisplay.textContent()
-    return gameIdText?.replace('Game ID: ', '') || ''
+    // Extract just the ID part from "Game ID: XXXXXXXX"
+    const match = gameIdText?.match(/Game ID: ([A-Z0-9]+)/)
+    return match?.[1] || ''
   }
 
   async movePlayer(direction: 'up' | 'down' | 'left' | 'right') {

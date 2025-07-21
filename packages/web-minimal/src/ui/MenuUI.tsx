@@ -45,11 +45,11 @@ export function MenuUI() {
           
           <div className="game-info">
             <h2>{currentGame.name}</h2>
-            <p className="game-code">Game ID: {gameSession.gameId.slice(-8)}</p>
-            <p>Players: {playerCount} / {currentGame.maxPlayers}</p>
+            <p className="game-code" data-testid="game-id">Game ID: {gameSession.gameId.slice(-8)}</p>
+            <p data-testid="player-count">Players: {playerCount} / {currentGame.maxPlayers}</p>
           </div>
 
-          <div className="player-list">
+          <div className="player-list" data-testid="players-list">
             <h3>Players in Lobby:</h3>
             {gamePlayers.map((player) => (
               <div key={player.playerId} className="player-item">
@@ -66,6 +66,7 @@ export function MenuUI() {
           <div className="lobby-actions">
             {gameSession.isHost ? (
               <button
+                data-testid="start-game-button"
                 onClick={() => startGame()}
                 disabled={!canStart || isStartingGame}
                 className="primary-button"
@@ -112,6 +113,7 @@ export function MenuUI() {
             <label>
               Max Players:
               <select 
+                name="maxPlayers"
                 value={maxPlayers} 
                 onChange={(e) => setMaxPlayers(Number(e.target.value))}
                 className="select-input"
@@ -139,12 +141,13 @@ export function MenuUI() {
           {availableGames.length === 0 ? (
             <p className="no-games">No games available</p>
           ) : (
-            <div className="game-list">
+            <div className="game-list" data-testid="available-games">
               {availableGames.map((game) => (
                 <div
                   key={game._id}
                   className={`game-item ${selectedGameId === game._id ? 'selected' : ''}`}
                   onClick={() => setSelectedGameId(game._id)}
+                  data-game-id={game._id}
                 >
                   <div className="game-item-info">
                     <h3>{game.name}</h3>
@@ -157,6 +160,7 @@ export function MenuUI() {
               ))}
               {selectedGameId && (
                 <button
+                  data-testid="join-game-button"
                   onClick={() => joinGame(selectedGameId as any)}
                   disabled={isJoiningGame}
                   className="primary-button"

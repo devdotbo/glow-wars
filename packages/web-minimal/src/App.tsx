@@ -12,7 +12,7 @@ if (!convexUrl) {
   throw new Error('VITE_CONVEX_URL is not defined')
 }
 
-const { convexClient, queryClient } = createConvexClients(convexUrl)
+const { convexClient, queryClient, convexQueryClient } = createConvexClients(convexUrl)
 
 export function App() {
   return (
