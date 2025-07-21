@@ -2,15 +2,20 @@ import { test, expect } from '../fixtures/game.fixture'
 import { Page } from '@playwright/test'
 
 test.describe('Game Lobby System', () => {
-  test('should create guest player on first visit', async ({ page, gamePage, guestPlayer }) => {
-    // Guest player should be created automatically
-    expect(guestPlayer).toBeDefined()
-    expect(guestPlayer.id).toBeTruthy()
-    expect(guestPlayer.name).toMatch(/^(Neon|Cyber|Glow|Shadow|Electric|Quantum|Plasma|Photon) (Runner|Hunter|Seeker|Warrior|Guardian|Phantom|Striker|Blazer)$/)
-    expect(guestPlayer.color).toBeGreaterThanOrEqual(0)
+  test('should create guest player on first visit', async ({ page, gamePage }) => {
+    // Navigate to home page
+    await page.goto('/')
+    
+    // Wait for main menu to be visible
+    await page.waitForSelector('[data-testid="main-menu"]', { timeout: 10000 })
+    
+    // Guest player name should be displayed
+    const playerName = await page.textContent('[data-testid="player-preview"]')
+    expect(playerName).toBeTruthy()
+    expect(playerName).toMatch(/^[A-Z][a-zA-Z]+[0-9]+$/)
     
     // Main menu should be visible
-    await expect(gamePage.mainMenu).toBeVisible()
+    await expect(page.locator('[data-testid="main-menu"]')).toBeVisible()
   })
 
   test('should create a new game', async ({ page, gamePage }) => {

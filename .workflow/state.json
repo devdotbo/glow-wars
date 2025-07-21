@@ -1,5 +1,10 @@
 {
-  "currentTask": null,
+  "currentTask": {
+    "id": 12,
+    "name": "E2E Testing Execution & Convex Reorganization Fix",
+    "status": "in_progress",
+    "startedAt": "2025-01-21T16:00:00Z"
+  },
   "completedTasks": [
     {
       "id": 10,
@@ -237,6 +242,35 @@
       "testsPassing": "Not yet run",
       "lastAction": "Complete E2E testing infrastructure implemented with Playwright, supporting multi-frontend testing and CI/CD integration",
       "notes": "Supports testing both web-minimal and web-tanstack frontends. Uses page objects pattern and custom fixtures for game-specific functionality."
+    },
+    {
+      "id": 12,
+      "name": "E2E Testing Execution & Convex Reorganization Fix",
+      "status": "in_progress",
+      "startedAt": "2025-01-21T16:00:00Z",
+      "filesCreated": [
+        "packages/e2e-tests/playwright.config.local.ts",
+        "packages/e2e-tests/tests/debug.spec.ts",
+        "packages/e2e-tests/run-test.sh"
+      ],
+      "filesModified": [
+        "packages/convex/package.json",
+        "packages/e2e-tests/playwright.config.ts",
+        "packages/e2e-tests/tests/game-lobby.spec.ts",
+        "packages/web-minimal/src/ui/MenuUI.tsx"
+      ],
+      "filesReorganized": [
+        "All packages/convex/*.ts files moved to packages/convex/convex/"
+      ],
+      "testsWritten": 0,
+      "testsPassing": "1/25 E2E tests passing",
+      "lastAction": "Fixed Convex function discovery issue by reorganizing files to convex/ subdirectory. First E2E test now passing.",
+      "criticalFixes": [
+        "Convex functions must be in convex/ subdirectory, not package root",
+        "Temporarily disabled auth.config.ts due to missing VITE_CLERK_FRONTEND_API_URL",
+        "Added data-testid attributes to MenuUI components for E2E testing"
+      ],
+      "nextAction": "Run remaining 24 E2E tests and fix any failures"
     }
   ],
   "projectHealth": {

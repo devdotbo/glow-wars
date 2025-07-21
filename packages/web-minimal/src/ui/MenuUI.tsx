@@ -92,12 +92,12 @@ export function MenuUI() {
 
   // Main menu - create or join game
   return (
-    <div className="menu-overlay">
+    <div className="menu-overlay" data-testid="main-menu">
       <div className="menu-container">
         <h1>Glow Wars</h1>
         
         <div className="player-info">
-          <div className="player-preview">
+          <div className="player-preview" data-testid="player-preview">
             <div 
               className="player-color-dot" 
               style={{ backgroundColor: guestPlayer.color }}
@@ -122,6 +122,7 @@ export function MenuUI() {
               </select>
             </label>
             <button
+              data-testid="create-game-button"
               onClick={() => createGame(maxPlayers)}
               disabled={isCreatingGame}
               className="primary-button"

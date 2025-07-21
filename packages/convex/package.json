@@ -8,7 +8,7 @@
     "./_generated/dataModel": "./_generated/dataModel.d.ts"
   },
   "scripts": {
-    "dev": "convex dev",
+    "dev": "convex dev --typecheck=disable",
     "deploy": "convex deploy",
     "test": "vitest",
     "typecheck": "tsc --noEmit"

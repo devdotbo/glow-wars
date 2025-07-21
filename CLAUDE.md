@@ -67,6 +67,10 @@ This is a full-stack TypeScript application using:
 For comprehensive Convex development guidelines, best practices, and examples, refer to:
 **`docs/convex.md`**
 
+**CRITICAL**: All Convex function files MUST be located in the `convex/` subdirectory within the package:
+- ✅ Correct: `packages/convex/convex/players.ts`
+- ❌ Wrong: `packages/convex/players.ts`
+
 This file contains:
 - Complete function syntax and validators documentation
 - Schema design patterns and best practices
@@ -76,11 +80,12 @@ This file contains:
 - Full example implementations
 
 Key highlights:
-1. **Function Syntax**: Always use the new function syntax with explicit validators
-2. **Validators**: Use proper validators for all arguments and return types (e.g., `v.id("tableName")`, `v.string()`)
-3. **Indexes**: Name indexes descriptively including all fields (e.g., "by_channel_and_user")
-4. **Queries**: Use `withIndex` instead of `filter` for performance
-5. **Internal Functions**: Use `internal*` variants for private functions not exposed to clients
+1. **File Organization**: All function files MUST be in `packages/convex/convex/` directory
+2. **Function Syntax**: Always use the new function syntax with explicit validators
+3. **Validators**: Use proper validators for all arguments and return types (e.g., `v.id("tableName")`, `v.string()`)
+4. **Indexes**: Name indexes descriptively including all fields (e.g., "by_channel_and_user")
+5. **Queries**: Use `withIndex` instead of `filter` for performance
+6. **Internal Functions**: Use `internal*` variants for private functions not exposed to clients
 
 ## Configuration Requirements
 
