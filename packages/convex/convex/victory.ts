@@ -293,31 +293,34 @@ export const getGameResult = query({
   args: {
     gameId: v.id('games'),
   },
-  returns: v.optional(v.object({
-    game: v.object({
-      _id: v.id('games'),
-      name: v.string(),
-      status: v.string(),
-      winnerId: v.optional(v.id('players')),
-      winCondition: v.optional(v.string()),
-      startedAt: v.optional(v.number()),
-      finishedAt: v.optional(v.number()),
-      duration: v.optional(v.number()),
+  returns: v.union(
+    v.object({
+      game: v.object({
+        _id: v.id('games'),
+        name: v.string(),
+        status: v.string(),
+        winnerId: v.optional(v.id('players')),
+        winCondition: v.optional(v.string()),
+        startedAt: v.optional(v.number()),
+        finishedAt: v.optional(v.number()),
+        duration: v.optional(v.number()),
+      }),
+      players: v.array(v.object({
+        playerId: v.id('players'),
+        placement: v.number(),
+        finalScore: v.number(),
+        finalTerritory: v.number(),
+        isWinner: v.boolean(),
+        playerName: v.string(),
+        playerColor: v.string(),
+      })),
     }),
-    players: v.array(v.object({
-      playerId: v.id('players'),
-      placement: v.number(),
-      finalScore: v.number(),
-      finalTerritory: v.number(),
-      isWinner: v.boolean(),
-      playerName: v.string(),
-      playerColor: v.string(),
-    })),
-  })),
+    v.null()
+  ),
   handler: async (ctx, args) => {
     const game = await ctx.db.get(args.gameId)
     if (!game || game.status !== 'finished') {
-      return undefined
+      return null
     }
     
     const gamePlayers = await ctx.db
