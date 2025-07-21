@@ -37,7 +37,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "convex": "^1.25.0"
+    "convex": "^1.25.0",
+    "@convex-dev/react-query": "^0.0.0-alpha.5",
+    "@tanstack/react-query": "^5.81.2"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
