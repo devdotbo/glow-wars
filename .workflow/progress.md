@@ -817,12 +817,27 @@ Convex expects all function files to be in a `convex/` subdirectory within the p
 - Remaining 24 E2E tests need to be run and potentially fixed
 - Some Convex TypeScript errors exist but don't block functionality
 
+#### Progress Update (2025-01-21T20:00:00Z):
+
+**E2E Testing Progress**:
+- Fixed React Query configuration issue by properly setting up convexQueryClient
+- 2/25 E2E tests now passing (guest player creation, button display)
+- Discovered issue: createGame mutation not executing when button is clicked
+- Button click registers but mutation doesn't run (no network requests, no state change)
+- Need to investigate mutation setup and execution flow
+
+**Additional Fixes Applied**:
+- Updated shared convex-api to configure QueryClient with convexQueryClient's queryFn
+- Added comprehensive debugging to E2E tests (network capture, console logs)
+- Updated all UI locators to use data-testid attributes
+
 #### Next Steps:
 
-1. Run remaining E2E test suites
-2. Fix any failing tests
-3. Re-enable auth configuration with proper env vars
-4. Document any additional UI changes needed for test stability
+1. Diagnose why createGame mutation isn't executing
+2. Fix mutation execution issue
+3. Run remaining E2E test suites
+4. Re-enable auth configuration with proper env vars
+5. Document any additional UI changes needed for test stability
 
 ---
 

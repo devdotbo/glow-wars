@@ -263,14 +263,15 @@
         "All packages/convex/*.ts files moved to packages/convex/convex/"
       ],
       "testsWritten": 0,
-      "testsPassing": "1/25 E2E tests passing",
-      "lastAction": "Fixed Convex function discovery issue by reorganizing files to convex/ subdirectory. First E2E test now passing.",
+      "testsPassing": "2/25 E2E tests passing (guest player, button display)",
+      "lastAction": "Fixed React Query configuration. Investigating createGame mutation issue.",
       "criticalFixes": [
         "Convex functions must be in convex/ subdirectory, not package root",
         "Temporarily disabled auth.config.ts due to missing VITE_CLERK_FRONTEND_API_URL",
-        "Added data-testid attributes to MenuUI components for E2E testing"
+        "Added data-testid attributes to MenuUI components for E2E testing",
+        "Fixed React Query configuration to include convexQueryClient queryFn"
       ],
-      "nextAction": "Run remaining 24 E2E tests and fix any failures"
+      "nextAction": "Diagnose and fix createGame mutation execution issue"
     }
   ],
   "projectHealth": {
