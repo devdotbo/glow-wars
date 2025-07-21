@@ -9,6 +9,11 @@
     "dev:backend": "pnpm --filter @glow-wars/convex dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @glow-wars/e2e-tests test",
+    "test:e2e:ui": "pnpm --filter @glow-wars/e2e-tests test:ui",
+    "test:e2e:minimal": "pnpm --filter @glow-wars/e2e-tests test:minimal",
+    "test:e2e:tanstack": "pnpm --filter @glow-wars/e2e-tests test:tanstack",
+    "playwright:install": "pnpm --filter @glow-wars/e2e-tests playwright:install",
     "format": "prettier --write .",
     "clean": "pnpm -r clean && rm -rf node_modules"
   },

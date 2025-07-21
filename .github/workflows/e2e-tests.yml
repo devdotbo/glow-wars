@@ -1,0 +1,103 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+  CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+
+jobs:
+  test-minimal:
+    name: E2E Tests - Minimal Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build shared package
+        run: pnpm --filter @glow-wars/shared build
+        
+      - name: Install Playwright browsers
+        run: pnpm playwright:install
+        
+      - name: Run E2E tests - Minimal
+        run: pnpm test:e2e:minimal
+        env:
+          CI: true
+          
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-minimal
+          path: packages/e2e-tests/playwright-report/
+          retention-days: 7
+          
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-minimal
+          path: packages/e2e-tests/test-results/
+          retention-days: 7
+
+  test-tanstack:
+    name: E2E Tests - TanStack Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build shared package
+        run: pnpm --filter @glow-wars/shared build
+        
+      - name: Install Playwright browsers
+        run: pnpm playwright:install
+        
+      - name: Run E2E tests - TanStack
+        run: pnpm test:e2e:tanstack
+        env:
+          CI: true
+          
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-tanstack
+          path: packages/e2e-tests/playwright-report/
+          retention-days: 7
+          
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-tanstack
+          path: packages/e2e-tests/test-results/
+          retention-days: 7
