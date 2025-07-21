@@ -113,22 +113,42 @@ export function useGameState() {
   // Create game mutation
   const createGameMutation = useMutation({
     mutationFn: async (maxPlayers: number) => {
-      if (!guestPlayer) throw new Error('No guest player')
+      console.log('createGameMutation called with maxPlayers:', maxPlayers)
+      console.log('Guest player:', guestPlayer)
       
-      const gameId = await convex.mutation(api.games.createGame, {
-        name: `${guestPlayer.name}'s Game`,
-        maxPlayers,
-        mapType: 'standard',
-        createdBy: guestPlayer.id,
-      })
+      if (!guestPlayer) {
+        console.error('No guest player available')
+        throw new Error('No guest player')
+      }
+      
+      try {
+        console.log('Calling convex mutation api.games.createGame')
+        const gameId = await convex.mutation(api.games.createGame, {
+          name: `${guestPlayer.name}'s Game`,
+          maxPlayers,
+          mapType: 'standard',
+          createdBy: guestPlayer.id,
+        })
+        
+        console.log('Game created successfully with ID:', gameId)
+        
+        return gameId
+      } catch (error) {
+        console.error('Error creating game:', error)
+        throw error
+      }
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error)
+    },
+    onSuccess: (gameId) => {
+      console.log('Mutation success, gameId:', gameId)
       
       setGameSession({
         gameId,
-        playerId: guestPlayer.id,
+        playerId: guestPlayer!.id,
         isHost: true,
       })
-      
-      return gameId
     },
   })
 
@@ -142,9 +162,12 @@ export function useGameState() {
         playerId: guestPlayer.id,
       })
       
+      return gameId
+    },
+    onSuccess: (gameId) => {
       setGameSession({
         gameId,
-        playerId: guestPlayer.id,
+        playerId: guestPlayer!.id,
         isHost: false,
       })
     },
@@ -159,7 +182,8 @@ export function useGameState() {
         gameId: gameSession.gameId,
         playerId: gameSession.playerId,
       })
-      
+    },
+    onSuccess: () => {
       setGameSession({
         gameId: null,
         playerId: gameSession.playerId,

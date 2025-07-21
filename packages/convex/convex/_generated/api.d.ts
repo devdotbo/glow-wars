@@ -32,6 +32,7 @@ import type * as posts from "../posts.js";
 import type * as powerups from "../powerups.js";
 import type * as tasks from "../tasks.js";
 import type * as territory from "../territory.js";
+import type * as types from "../types.js";
 import type * as user from "../user.js";
 import type * as victory from "../victory.js";
 
@@ -63,6 +64,7 @@ declare const fullApi: ApiFromModules<{
   powerups: typeof powerups;
   tasks: typeof tasks;
   territory: typeof territory;
+  types: typeof types;
   user: typeof user;
   victory: typeof victory;
 }>;

@@ -1,7 +1,8 @@
-import { mutation, query } from './_generated/server'
+import { mutation, query, MutationCtx } from './_generated/server'
 import { v } from 'convex/values'
-import { api } from './_generated/api'
+import { api, internal } from './_generated/api'
 import { batchGetTerritoryCells } from './optimizations/batch'
+import { GameId, PlayerId, GameMutationCtx } from './types'
 
 const MAP_SIZE = 1000
 const GRID_SIZE = 10 // Each territory cell is 10x10 units
@@ -9,10 +10,10 @@ const GRID_CELLS = MAP_SIZE / GRID_SIZE // 100 cells per dimension
 
 // Helper function to paint territory (can be called from other mutations)
 export async function paintTerritoryHelper(
-  ctx: any,
+  ctx: GameMutationCtx,
   args: {
-    gameId: any,
-    playerId: any,
+    gameId: GameId,
+    playerId: PlayerId,
     x: number,
     y: number,
   }
@@ -123,7 +124,7 @@ export async function paintTerritoryHelper(
     
     // Check for territory victory if cells were painted
     if (paintedCells.length > 0) {
-      await ctx.runMutation(api.victory.checkVictoryConditions, {
+      await ctx.runMutation(internal.victory.checkVictoryConditions, {
         gameId: args.gameId,
       })
     }
@@ -214,7 +215,7 @@ export const calculateTerritoryStats = query({
     // Convert to array with percentages
     const playerStats = Array.from(playerCounts.entries()).map(
       ([playerId, cellCount]) => ({
-        playerId: playerId as any, // Cast to Id type
+        playerId: playerId as PlayerId,
         cellCount,
         percentage: (cellCount / totalCells) * 100,
       })

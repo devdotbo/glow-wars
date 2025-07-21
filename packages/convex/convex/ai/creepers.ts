@@ -1,9 +1,11 @@
-import { mutation } from '../_generated/server'
+import { mutation, MutationCtx } from '../_generated/server'
 import { v } from 'convex/values'
-import { api } from '../_generated/api'
+import { api, internal } from '../_generated/api'
+import { Id } from '../_generated/dataModel'
 import { getCachedGameData } from '../optimizations/cache'
 import { batchUpdateAIEntities, batchGetTerritoryCells } from '../optimizations/batch'
 import { getEntitiesInRange, buildSpatialIndex, findUnpaintedSectors } from '../optimizations/spatial'
+import { GameId, PlayerId, GamePlayerData, Position, TerritoryCell, GameMutationCtx } from '../types'
 
 const CREEPER_DETECTION_RADIUS = 100
 const CREEPER_SPEED = 3
@@ -14,9 +16,9 @@ const MAP_SIZE = 1000
 const GRID_SIZE = 10
 
 export async function findDarkAreas(
-  ctx: any,
-  gameId: any
-): Promise<{ x: number; y: number }[]> {
+  ctx: GameMutationCtx,
+  gameId: GameId
+): Promise<Position[]> {
   // Get all painted territories
   const territories = await ctx.db
     .query('territory')
@@ -25,12 +27,12 @@ export async function findDarkAreas(
   
   // Create set of painted cells
   const paintedCells = new Set<string>()
-  territories.forEach((t: any) => {
+  territories.forEach((t) => {
     paintedCells.add(`${t.gridX},${t.gridY}`)
   })
   
   // Find unpainted cells (sample for performance)
-  const darkAreas: { x: number; y: number }[] = []
+  const darkAreas: Position[] = []
   const SAMPLE_RATE = 10 // Sample every 10th cell
   
   for (let gridX = 0; gridX < 100; gridX += SAMPLE_RATE) {
@@ -49,29 +51,23 @@ export async function findDarkAreas(
 }
 
 export async function detectPlayersInDarkness(
-  ctx: any,
-  gameId: any,
-  position: { x: number; y: number },
-  cachedPlayers?: Array<{
-    playerId: any
-    gamePlayerId: any
-    position: { x: number; y: number }
-    glowRadius: number
-    hasShadowCloak: boolean
-  }>,
-  territoryMap?: Map<string, any>
-): Promise<{ playerId: any; gamePlayerId: any; distance: number; inDarkness: boolean }[]> {
+  ctx: GameMutationCtx,
+  gameId: GameId,
+  position: Position,
+  cachedPlayers?: GamePlayerData[],
+  territoryMap?: Map<string, TerritoryCell>
+): Promise<{ playerId: PlayerId; gamePlayerId: Id<'gamePlayers'>; distance: number; inDarkness: boolean }[]> {
   // Use cached players if provided, otherwise fetch
   let players = cachedPlayers
   if (!players) {
-    const gameData = await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+    const gameData = await ctx.runMutation(internal.optimizations.cache.getCachedGameData, {
       gameId,
     })
     players = gameData.alivePlayers
   }
   
   // Build spatial index for efficient range queries
-  const spatialIndex = buildSpatialIndex(players.map(p => ({
+  const spatialIndex = buildSpatialIndex(players!.map(p => ({
     id: p.gamePlayerId,
     position: p.position,
   })))
@@ -84,17 +80,17 @@ export async function detectPlayersInDarkness(
   if (!territoryMap) {
     const territories = await ctx.db
       .query('territory')
-      .withIndex('by_game', (q: any) => q.eq('gameId', gameId))
+      .withIndex('by_game', (q) => q.eq('gameId', gameId))
       .collect()
     
     territoryMap = new Map(
-      territories.map(t => [`${t.gridX},${t.gridY}`, t])
+      territories.map(t => [`${t.gridX},${t.gridY}`, t as TerritoryCell])
     )
   }
   
   const nearbyPlayers = []
   
-  for (const player of players) {
+  for (const player of players!) {
     // Skip players not in range
     if (!playerIdSet.has(player.gamePlayerId)) {
       continue
@@ -192,11 +188,11 @@ export const spawnCreepers = mutation({
 })
 
 export async function updateCreeperBehaviorHelper(
-  ctx: any,
-  args: { gameId: any }
+  ctx: GameMutationCtx,
+  args: { gameId: GameId }
 ): Promise<{ updated: number; playersHit: number }> {
     // Get all game data in one query
-    const gameData = await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+    const gameData = await ctx.runMutation(internal.optimizations.cache.getCachedGameData, {
       gameId: args.gameId,
     })
     
@@ -206,23 +202,28 @@ export async function updateCreeperBehaviorHelper(
     // Get all territories once
     const territories = await ctx.db
       .query('territory')
-      .withIndex('by_game', (q: any) => q.eq('gameId', args.gameId))
+      .withIndex('by_game', (q) => q.eq('gameId', args.gameId))
       .collect()
     
     const territoryMap = new Map(
-      territories.map(t => [`${t.gridX},${t.gridY}`, t])
+      territories.map(t => [`${t.gridX},${t.gridY}`, t as TerritoryCell])
     )
     
     // Create player lookup map
     const playerMap = new Map(
-      players.map(p => [p.playerId, p])
+      players.map((p: GamePlayerData) => [p.playerId, p])
     )
     
     // Find dark areas once for all creepers
     const darkAreas = await findDarkAreas(ctx, args.gameId)
     
     let playersHit = 0
-    const updates = []
+    const updates: Array<{
+      entityId: Id<'aiEntities'>
+      position: Position
+      state: string
+      targetId?: PlayerId
+    }> = []
     
     for (const creeper of creepers) {
       // Check if creeper is in painted territory
@@ -248,6 +249,8 @@ export async function updateCreeperBehaviorHelper(
       if (nearbyPlayers.length > 0 && nearbyPlayers[0].distance < CREEPER_CONTACT_DISTANCE) {
         const gamePlayer = playerMap.get(nearbyPlayers[0].playerId)
         
+        if (gamePlayer && gamePlayer.glowRadius !== undefined && gamePlayer.gamePlayerId !== undefined) {
+        
         if (gamePlayer) {
           // Damage player
           const newGlow = Math.max(10, gamePlayer.glowRadius - CREEPER_DAMAGE)
@@ -255,6 +258,7 @@ export async function updateCreeperBehaviorHelper(
             glowRadius: newGlow,
           })
           playersHit++
+        }
           
           // 20% chance to spawn a power-up when damaging a player
           if (Math.random() < 0.2) {
@@ -309,7 +313,7 @@ export async function updateCreeperBehaviorHelper(
         // Use cached player data
         const gamePlayer = playerMap.get(targetId)
         
-        if (gamePlayer) {
+        if (gamePlayer && gamePlayer.position !== undefined) {
           const dx = gamePlayer.position.x - creeper.position.x
           const dy = gamePlayer.position.y - creeper.position.y
           const distance = Math.sqrt(dx * dx + dy * dy)
@@ -352,7 +356,7 @@ export async function updateCreeperBehaviorHelper(
     // Batch update all creepers
     let updated = 0
     if (updates.length > 0) {
-      const result = await ctx.runMutation(api.optimizations.batch.batchUpdateAIEntities, {
+      const result = await ctx.runMutation(internal.optimizations.batch.batchUpdateAIEntities, {
         updates,
       })
       updated = result.updated

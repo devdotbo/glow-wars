@@ -1,9 +1,11 @@
-import { mutation } from '../_generated/server'
+import { mutation, MutationCtx } from '../_generated/server'
 import { v } from 'convex/values'
-import { api } from '../_generated/api'
+import { api, internal } from '../_generated/api'
+import { Id } from '../_generated/dataModel'
 import { getCachedGameData } from '../optimizations/cache'
 import { batchUpdateAIEntities } from '../optimizations/batch'
 import { getEntitiesInRange, buildSpatialIndex } from '../optimizations/spatial'
+import { GameId, PlayerId, Position, GameMutationCtx, GamePlayerData } from '../types'
 
 const SPARK_DETECTION_RADIUS = 50
 const SPARK_SPEED = 2
@@ -12,28 +14,22 @@ const SPARK_CONSUME_DISTANCE = 10
 const MAP_SIZE = 1000
 
 export async function detectNearbyPlayers(
-  ctx: any,
-  gameId: any,
-  position: { x: number; y: number },
-  cachedPlayers?: Array<{
-    playerId: any
-    gamePlayerId: any
-    position: { x: number; y: number }
-    glowRadius: number
-    hasShadowCloak: boolean
-  }>
-): Promise<{ playerId: any; gamePlayerId: any; distance: number }[]> {
+  ctx: GameMutationCtx,
+  gameId: GameId,
+  position: Position,
+  cachedPlayers?: GamePlayerData[]
+): Promise<{ playerId: PlayerId; gamePlayerId: Id<'gamePlayers'>; distance: number }[]> {
   // Use cached players if provided, otherwise fetch
   let players = cachedPlayers
   if (!players) {
-    const gameData = await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+    const gameData = await ctx.runMutation(internal.optimizations.cache.getCachedGameData, {
       gameId,
     })
     players = gameData.alivePlayers
   }
   
   // Build spatial index for efficient range queries
-  const spatialIndex = buildSpatialIndex(players.map(p => ({
+  const spatialIndex = buildSpatialIndex(players!.map(p => ({
     id: p.gamePlayerId,
     position: p.position,
   })))
@@ -42,9 +38,9 @@ export async function detectNearbyPlayers(
   const playersInRange = getEntitiesInRange(position, SPARK_DETECTION_RADIUS, spatialIndex)
   const playerIdSet = new Set(playersInRange.map(p => p.id))
   
-  const nearbyPlayers = []
+  const nearbyPlayers: Array<{ playerId: PlayerId; gamePlayerId: Id<'gamePlayers'>; distance: number }> = []
   
-  for (const player of players) {
+  for (const player of players!) {
     // Skip players not in range
     if (!playerIdSet.has(player.gamePlayerId)) {
       continue
@@ -111,11 +107,11 @@ export const spawnSparks = mutation({
 })
 
 export async function updateSparkBehaviorHelper(
-  ctx: any,
-  args: { gameId: any }
+  ctx: GameMutationCtx,
+  args: { gameId: GameId }
 ): Promise<{ updated: number; consumed: number }> {
     // Get all game data in one query
-    const gameData = await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+    const gameData = await ctx.runMutation(internal.optimizations.cache.getCachedGameData, {
       gameId: args.gameId,
     })
     
@@ -124,11 +120,16 @@ export async function updateSparkBehaviorHelper(
     
     // Create player lookup map
     const playerMap = new Map(
-      players.map(p => [p.playerId, p])
+      players.map((p: GamePlayerData) => [p.playerId, p])
     )
     
     let consumed = 0
-    const updates = []
+    const updates: Array<{
+    entityId: Id<'aiEntities'>
+    position: Position
+    state: string
+    targetId?: PlayerId
+  }> = []
     
     for (const spark of sparks) {
       const nearbyPlayers = await detectNearbyPlayers(
@@ -141,7 +142,7 @@ export async function updateSparkBehaviorHelper(
       if (nearbyPlayers.length > 0 && nearbyPlayers[0].distance < SPARK_CONSUME_DISTANCE) {
         const gamePlayer = playerMap.get(nearbyPlayers[0].playerId)
         
-        if (gamePlayer) {
+        if (gamePlayer && gamePlayer.gamePlayerId !== undefined && gamePlayer.glowRadius !== undefined) {
           await ctx.db.patch(gamePlayer.gamePlayerId, {
             glowRadius: Math.min(100, gamePlayer.glowRadius + 5),
           })
@@ -161,7 +162,7 @@ export async function updateSparkBehaviorHelper(
         
         const player = playerMap.get(nearbyPlayers[0].playerId)
         
-        if (player) {
+        if (player && player.position !== undefined) {
           const dx = spark.position.x - player.position.x
           const dy = spark.position.y - player.position.y
           const distance = Math.sqrt(dx * dx + dy * dy)
@@ -198,7 +199,7 @@ export async function updateSparkBehaviorHelper(
     // Batch update all sparks
     let updated = 0
     if (updates.length > 0) {
-      const result = await ctx.runMutation(api.optimizations.batch.batchUpdateAIEntities, {
+      const result = await ctx.runMutation(internal.optimizations.batch.batchUpdateAIEntities, {
         updates,
       })
       updated = result.updated

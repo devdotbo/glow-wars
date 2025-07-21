@@ -1,5 +1,5 @@
 import { cronJobs } from 'convex/server'
-import { api } from './_generated/api'
+import { api, internal } from './_generated/api'
 
 const crons = cronJobs()
 
@@ -7,27 +7,27 @@ const crons = cronJobs()
 crons.interval(
   'smart collision detection',
   { seconds: 1 }, // Reduced frequency, smart scheduler will skip idle games
-  api.optimizations.scheduler.smartCheckCollisions
+  internal.optimizations.scheduler.smartCheckCollisions
 )
 
 crons.interval(
   'smart AI spark updates',
   { seconds: 2 }, // Reduced frequency
-  api.optimizations.scheduler.smartUpdateAI,
+  internal.optimizations.scheduler.smartUpdateAI,
   { entityType: 'spark' }
 )
 
 crons.interval(
   'smart AI creeper updates',
   { seconds: 2 }, // Reduced frequency
-  api.optimizations.scheduler.smartUpdateAI,
+  internal.optimizations.scheduler.smartUpdateAI,
   { entityType: 'creeper' }
 )
 
 crons.interval(
   'smart glow decay',
   { seconds: 30 },
-  api.optimizations.scheduler.smartDecayGlow
+  internal.optimizations.scheduler.smartDecayGlow
 )
 
 // Keep regular scheduling for less performance-critical operations
@@ -46,14 +46,14 @@ crons.interval(
 crons.interval(
   'check victory conditions',
   { seconds: 5 },
-  api.victory.checkAllActiveGames
+  internal.victory.checkAllActiveGames
 )
 
 // Add data cleanup job
 crons.interval(
   'cleanup old data',
   { hours: 1 }, // Run hourly
-  api.optimizations.cleanup.runCleanup,
+  internal.optimizations.cleanup.runCleanup,
   { cleanupTypes: ['positions', 'finishedGames'] }
 )
 

@@ -1,7 +1,8 @@
-import { internalMutation, query } from '../_generated/server'
+import { internalMutation, query, MutationCtx, QueryCtx } from '../_generated/server'
 import { v } from 'convex/values'
 import { Id } from '../_generated/dataModel'
-import { api } from '../_generated/api'
+import { api, internal } from '../_generated/api'
+import { GameId, PlayerId } from '../types'
 
 // Cleanup thresholds
 const POSITION_HISTORY_LIMIT = 100 // Keep last 100 positions per player
@@ -31,7 +32,7 @@ export const cleanupPositionHistory = internalMutation({
     const playerQuery = args.gameId
       ? ctx.db
           .query('gamePlayers')
-          .withIndex('by_game', q => q.eq('gameId', args.gameId))
+          .withIndex('by_game', q => q.eq('gameId', args.gameId!))
       : ctx.db.query('gamePlayers')
     
     const gamePlayers = await playerQuery.collect()
@@ -402,14 +403,14 @@ export const runCleanup = internalMutation({
       details: v.any(),
     })),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ results: Array<{ type: string; success: boolean; details: any }> }> => {
     const types = args.cleanupTypes || ['all']
-    const results = []
+    const results: Array<{ type: string; success: boolean; details: any }> = []
     
     if (types.includes('all') || types.includes('positions')) {
       try {
         const positionResult = await ctx.runMutation(
-          api.optimizations.cleanup.cleanupPositionHistory,
+          internal.optimizations.cleanup.cleanupPositionHistory,
           {}
         )
         results.push({
@@ -421,7 +422,7 @@ export const runCleanup = internalMutation({
         results.push({
           type: 'positions',
           success: false,
-          details: { error: error.message },
+          details: { error: (error as Error).message },
         })
       }
     }
@@ -429,7 +430,7 @@ export const runCleanup = internalMutation({
     if (types.includes('all') || types.includes('finishedGames')) {
       try {
         const gameResult = await ctx.runMutation(
-          api.optimizations.cleanup.cleanupFinishedGames,
+          internal.optimizations.cleanup.cleanupFinishedGames,
           {}
         )
         results.push({
@@ -441,7 +442,7 @@ export const runCleanup = internalMutation({
         results.push({
           type: 'finishedGames',
           success: false,
-          details: { error: error.message },
+          details: { error: (error as Error).message },
         })
       }
     }
@@ -449,7 +450,7 @@ export const runCleanup = internalMutation({
     if (types.includes('all') || types.includes('orphaned')) {
       try {
         const orphanedResult = await ctx.runMutation(
-          api.optimizations.cleanup.cleanupOrphanedData,
+          internal.optimizations.cleanup.cleanupOrphanedData,
           {}
         )
         results.push({
@@ -461,7 +462,7 @@ export const runCleanup = internalMutation({
         results.push({
           type: 'orphaned',
           success: false,
-          details: { error: error.message },
+          details: { error: (error as Error).message },
         })
       }
     }

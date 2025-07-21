@@ -125,7 +125,10 @@ export function MenuUI() {
             </label>
             <button
               data-testid="create-game-button"
-              onClick={() => createGame(maxPlayers)}
+              onClick={() => {
+                console.log('Create game button clicked, maxPlayers:', maxPlayers)
+                createGame(maxPlayers)
+              }}
               disabled={isCreatingGame}
               className="primary-button"
             >

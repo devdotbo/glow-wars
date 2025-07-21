@@ -1,6 +1,7 @@
-import { mutation, query, internalMutation } from './_generated/server'
+import { mutation, query, internalMutation, MutationCtx } from './_generated/server'
 import { v } from 'convex/values'
-import { api } from './_generated/api'
+import { api, internal } from './_generated/api'
+import { GameId, PlayerId, GameMutationCtx } from './types'
 
 // Constants
 const TERRITORY_WIN_PERCENTAGE = 60
@@ -28,13 +29,13 @@ async function checkTerritoryVictoryHelper(ctx: any, gameId: any) {
 }
 
 // Helper function to check elimination victory
-async function checkEliminationVictoryHelper(ctx: any, gameId: any) {
+async function checkEliminationVictoryHelper(ctx: GameMutationCtx, gameId: GameId) {
   const gamePlayers = await ctx.db
     .query('gamePlayers')
     .withIndex('by_game', (q: any) => q.eq('gameId', gameId))
     .collect()
   
-  const alivePlayers = gamePlayers.filter(p => p.isAlive)
+  const alivePlayers = gamePlayers.filter((p: any) => p.isAlive)
   
   if (alivePlayers.length === 1) {
     return {
@@ -48,8 +49,8 @@ async function checkEliminationVictoryHelper(ctx: any, gameId: any) {
     // Edge case: all players eliminated simultaneously
     // Winner is the last eliminated
     const lastEliminated = gamePlayers
-      .filter(p => p.eliminatedAt)
-      .sort((a, b) => b.eliminatedAt! - a.eliminatedAt!)[0]
+      .filter((p: any) => p.eliminatedAt)
+      .sort((a: any, b: any) => b.eliminatedAt! - a.eliminatedAt!)[0]
     
     if (lastEliminated) {
       return {
@@ -64,7 +65,7 @@ async function checkEliminationVictoryHelper(ctx: any, gameId: any) {
 }
 
 // Helper function to check time limit victory
-async function checkTimeLimitHelper(ctx: any, gameId: any) {
+async function checkTimeLimitHelper(ctx: GameMutationCtx, gameId: GameId) {
   const game = await ctx.db.get(gameId)
   if (!game || !game.startedAt) return { hasWinner: false }
   
@@ -110,7 +111,7 @@ async function calculateFinalScoreHelper(
   
   // Get territory count
   const stats = await ctx.runQuery(api.territory.calculateTerritoryStats, { gameId })
-  const playerStat = stats.playerStats.find(s => s.playerId === playerId)
+  const playerStat = stats.playerStats.find((s: any) => s.playerId === playerId)
   const territoryCount = playerStat?.cellCount || 0
   
   // Calculate survival time
@@ -178,7 +179,7 @@ export const endGame = internalMutation({
       const stats = await ctx.runQuery(api.territory.calculateTerritoryStats, { 
         gameId: args.gameId 
       })
-      const playerStat = stats.playerStats.find(s => s.playerId === gamePlayer.playerId)
+      const playerStat = stats.playerStats.find((s: any) => s.playerId === gamePlayer.playerId)
       const finalTerritory = playerStat?.cellCount || 0
       
       playerScores.push({
@@ -223,8 +224,8 @@ export const checkVictoryConditions = internalMutation({
     
     // Check territory victory
     const territoryResult = await checkTerritoryVictoryHelper(ctx, args.gameId)
-    if (territoryResult.hasWinner) {
-      await ctx.runMutation(api.victory.endGame, {
+    if (territoryResult.hasWinner && territoryResult.winnerId && territoryResult.winCondition) {
+      await ctx.runMutation(internal.victory.endGame, {
         gameId: args.gameId,
         winnerId: territoryResult.winnerId,
         winCondition: territoryResult.winCondition,
@@ -234,8 +235,8 @@ export const checkVictoryConditions = internalMutation({
     
     // Check elimination victory
     const eliminationResult = await checkEliminationVictoryHelper(ctx, args.gameId)
-    if (eliminationResult.hasWinner) {
-      await ctx.runMutation(api.victory.endGame, {
+    if (eliminationResult.hasWinner && eliminationResult.winnerId && eliminationResult.winCondition) {
+      await ctx.runMutation(internal.victory.endGame, {
         gameId: args.gameId,
         winnerId: eliminationResult.winnerId,
         winCondition: eliminationResult.winCondition,
@@ -245,8 +246,8 @@ export const checkVictoryConditions = internalMutation({
     
     // Check time limit victory
     const timeLimitResult = await checkTimeLimitHelper(ctx, args.gameId)
-    if (timeLimitResult.hasWinner) {
-      await ctx.runMutation(api.victory.endGame, {
+    if (timeLimitResult.hasWinner && timeLimitResult.winnerId && timeLimitResult.winCondition) {
+      await ctx.runMutation(internal.victory.endGame, {
         gameId: args.gameId,
         winnerId: timeLimitResult.winnerId,
         winCondition: timeLimitResult.winCondition,
@@ -271,7 +272,7 @@ export const checkAllActiveGames = internalMutation({
     let winnersFound = 0
     
     for (const game of activeGames) {
-      const result = await ctx.runMutation(api.victory.checkVictoryConditions, {
+      const result = await ctx.runMutation(internal.victory.checkVictoryConditions, {
         gameId: game._id,
       })
       
@@ -378,7 +379,7 @@ export const forceEndGame = mutation({
     success: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    await ctx.runMutation(api.victory.endGame, args)
+    await ctx.runMutation(internal.victory.endGame, args)
     return { success: true }
   },
 })

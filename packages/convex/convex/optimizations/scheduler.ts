@@ -1,7 +1,8 @@
-import { mutation, internalMutation, query } from '../_generated/server'
+import { mutation, internalMutation, query, MutationCtx } from '../_generated/server'
 import { v } from 'convex/values'
 import { Id } from '../_generated/dataModel'
-import { api } from '../_generated/api'
+import { api, internal } from '../_generated/api'
+import { GameId } from '../types'
 
 // Time thresholds for smart scheduling
 const RECENT_ACTIVITY_THRESHOLD = 5000 // 5 seconds
@@ -10,7 +11,7 @@ const CLEANUP_THRESHOLD = 300000 // 5 minutes
 
 // Game activity tracking interface
 interface GameActivity {
-  gameId: Id<'games'>
+  gameId: GameId
   lastActivity: number
   playerCount: number
   aiEntityCount: number
@@ -144,9 +145,9 @@ export const smartCheckCollisions = internalMutation({
     totalEliminations: v.number(),
     skippedGames: v.number(),
   }),
-  handler: async (ctx) => {
-    const gamesToProcess = await ctx.runMutation(
-      api.optimizations.scheduler.getGamesForProcessing,
+  handler: async (ctx): Promise<{ gamesChecked: number; totalCollisions: number; totalEliminations: number; skippedGames: number }> => {
+    const gamesToProcess: Array<{ gameId: GameId; playerCount: number; lastActivity: number; priority: number }> = await ctx.runMutation(
+      internal.optimizations.scheduler.getGamesForProcessing,
       { processType: 'collision', maxGames: 20 }
     )
     
@@ -163,7 +164,7 @@ export const smartCheckCollisions = internalMutation({
       
       // Update activity if there were collisions
       if (result.collisions > 0) {
-        await ctx.runMutation(api.optimizations.scheduler.updateGameActivity, {
+        await ctx.runMutation(internal.optimizations.scheduler.updateGameActivity, {
           gameId: game.gameId,
         })
       }
@@ -194,9 +195,9 @@ export const smartUpdateAI = internalMutation({
     entitiesUpdated: v.number(),
     skippedGames: v.number(),
   }),
-  handler: async (ctx, args) => {
-    const gamesToProcess = await ctx.runMutation(
-      api.optimizations.scheduler.getGamesForProcessing,
+  handler: async (ctx, args): Promise<{ gamesUpdated: number; entitiesUpdated: number; skippedGames: number }> => {
+    const gamesToProcess: Array<{ gameId: GameId; playerCount: number; lastActivity: number; priority: number }> = await ctx.runMutation(
+      internal.optimizations.scheduler.getGamesForProcessing,
       { processType: 'ai', maxGames: 15 }
     )
     
@@ -222,7 +223,7 @@ export const smartUpdateAI = internalMutation({
         gamesUpdated++
         
         // Update activity
-        await ctx.runMutation(api.optimizations.scheduler.updateGameActivity, {
+        await ctx.runMutation(internal.optimizations.scheduler.updateGameActivity, {
           gameId: game.gameId,
         })
       }
@@ -264,9 +265,9 @@ export const smartDecayGlow = internalMutation({
     playersDecayed: v.number(),
     skippedGames: v.number(),
   }),
-  handler: async (ctx) => {
-    const gamesToProcess = await ctx.runMutation(
-      api.optimizations.scheduler.getGamesForProcessing,
+  handler: async (ctx): Promise<{ gamesProcessed: number; playersDecayed: number; skippedGames: number }> => {
+    const gamesToProcess: Array<{ gameId: GameId; playerCount: number; lastActivity: number; priority: number }> = await ctx.runMutation(
+      internal.optimizations.scheduler.getGamesForProcessing,
       { processType: 'glow' }
     )
     

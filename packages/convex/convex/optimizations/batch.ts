@@ -4,7 +4,7 @@ import { Id } from '../_generated/dataModel'
 import { MutationCtx } from '../_generated/server'
 import { paintTerritoryHelper } from '../territory'
 import { checkCollisionsHelper } from '../collision'
-import { api } from '../_generated/api'
+import { api, internal } from '../_generated/api'
 
 const GRID_SIZE = 10
 
@@ -214,7 +214,7 @@ async function batchPaintTerritoryHelper(
   
   // Check victory conditions if territories were painted
   if (painted > 0) {
-    await ctx.runMutation(api.victory.checkVictoryConditions, {
+    await ctx.runMutation(internal.victory.checkVictoryConditions, {
       gameId: args.gameId,
     })
   }

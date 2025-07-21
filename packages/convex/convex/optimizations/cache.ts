@@ -1,7 +1,7 @@
 import { internalMutation, query } from '../_generated/server'
 import { v } from 'convex/values'
 import { Id } from '../_generated/dataModel'
-import { api } from '../_generated/api'
+import { api, internal } from '../_generated/api'
 
 // Cache TTL values
 const EFFECT_CACHE_TTL = 2000 // 2 seconds for player effects
@@ -285,21 +285,21 @@ export const prefetchGameData = internalMutation({
     
     // Prefetch data based on upcoming operations
     if (args.operations.includes('collision') || args.operations.includes('ai')) {
-      await ctx.runMutation(api.optimizations.cache.getCachedGameData, {
+      await ctx.runMutation(internal.optimizations.cache.getCachedGameData, {
         gameId: args.gameId,
       })
       prefetched.push('gameData')
     }
     
     if (args.operations.includes('effects')) {
-      await ctx.runMutation(api.optimizations.cache.getCachedPlayerEffects, {
+      await ctx.runMutation(internal.optimizations.cache.getCachedPlayerEffects, {
         gameId: args.gameId,
       })
       prefetched.push('playerEffects')
     }
     
     if (args.operations.includes('territory')) {
-      await ctx.runMutation(api.optimizations.cache.getCachedTerritoryStats, {
+      await ctx.runMutation(internal.optimizations.cache.getCachedTerritoryStats, {
         gameId: args.gameId,
       })
       prefetched.push('territoryStats')

@@ -1,5 +1,6 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import { GameId, PlayerId } from './types'
 
 const POWERUP_TYPES = [
   'prism_shield',
@@ -140,7 +141,7 @@ export const applyEffect = mutation({
   handler: async (ctx, args) => {
     const gamePlayer = await ctx.db
       .query('gamePlayers')
-      .withIndex('by_game_and_player', q =>
+      .withIndex('by_game_and_player', (q: any) =>
         q.eq('gameId', args.gameId).eq('playerId', args.playerId)
       )
       .unique()
@@ -160,9 +161,9 @@ export const applyEffect = mutation({
 async function applyEffectHelper(
   ctx: any,
   args: {
-    gameId: any,
-    playerId: any,
-    effect: any,
+    gameId: GameId,
+    playerId: PlayerId,
+    effect: 'prism_shield' | 'nova_burst' | 'shadow_cloak' | 'hyper_glow' | 'speed_surge',
     gamePlayer: any,
   }
 ): Promise<boolean> {
@@ -173,7 +174,7 @@ async function applyEffectHelper(
     // Paint large area around player
     const position = await ctx.db
       .query('positions')
-      .withIndex('by_game_and_player', q =>
+      .withIndex('by_game_and_player', (q: any) =>
         q.eq('gameId', args.gameId).eq('playerId', args.playerId)
       )
       .order('desc')
@@ -192,7 +193,7 @@ async function applyEffectHelper(
           // Check if cell exists
           const existing = await ctx.db
             .query('territory')
-            .withIndex('by_game_and_position', q =>
+            .withIndex('by_game_and_position', (q: any) =>
               q.eq('gameId', args.gameId).eq('gridX', gridX).eq('gridY', gridY)
             )
             .unique()
@@ -220,10 +221,10 @@ async function applyEffectHelper(
   // Check for existing effect of same type
   const existingEffect = await ctx.db
     .query('playerEffects')
-    .withIndex('by_game_and_player', q =>
+    .withIndex('by_game_and_player', (q: any) =>
       q.eq('gameId', args.gameId).eq('playerId', args.playerId)
     )
-    .filter(q => q.eq(q.field('effect'), args.effect))
+    .filter((q: any) => q.eq(q.field('effect'), args.effect))
     .first()
 
   if (existingEffect) {
@@ -233,7 +234,7 @@ async function applyEffectHelper(
     })
   } else {
     // Create new effect
-    const metadata: any = {}
+    const metadata: Record<string, any> = {}
     
     if (args.effect === 'speed_surge') {
       metadata.speedMultiplier = 1.5
@@ -315,7 +316,7 @@ export const getPlayerEffects = query({
   handler: async (ctx, args) => {
     const effects = await ctx.db
       .query('playerEffects')
-      .withIndex('by_game_and_player', q =>
+      .withIndex('by_game_and_player', (q: any) =>
         q.eq('gameId', args.gameId).eq('playerId', args.playerId)
       )
       .collect()
@@ -407,7 +408,7 @@ export const hasEffect = query({
     const now = Date.now()
     const effect = await ctx.db
       .query('playerEffects')
-      .withIndex('by_game_and_player', q =>
+      .withIndex('by_game_and_player', (q: any) =>
         q.eq('gameId', args.gameId).eq('playerId', args.playerId)
       )
       .filter(q => q.eq(q.field('effect'), args.effect))

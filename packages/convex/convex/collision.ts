@@ -2,7 +2,7 @@ import { mutation } from './_generated/server'
 import { v } from 'convex/values'
 import { MutationCtx } from './_generated/server'
 import { Id } from './_generated/dataModel'
-import { api } from './_generated/api'
+import { api, internal } from './_generated/api'
 import { detectCollisionPairs } from './optimizations/spatial'
 
 const COLLISION_DISTANCE = 15
@@ -216,7 +216,7 @@ export async function checkCollisionsHelper(
 
   // Check for victory conditions if there were eliminations
   if (eliminations > 0) {
-    await ctx.runMutation(api.victory.checkVictoryConditions, {
+    await ctx.runMutation(internal.victory.checkVictoryConditions, {
       gameId: args.gameId,
     })
   }

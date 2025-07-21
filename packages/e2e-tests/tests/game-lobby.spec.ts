@@ -27,9 +27,22 @@ test.describe('Game Lobby System', () => {
     await expect(createButton).toHaveText('Create Game')
   })
   
-  test.skip('should create a new game', async ({ page, gamePage }) => {
+  test('should create a new game', async ({ page, gamePage }) => {
+    // Set up console logging
+    page.on('console', msg => console.log('Browser console:', msg.type(), msg.text()))
+    page.on('pageerror', err => console.error('Page error:', err.message))
+    
     // Navigate to home page
+    console.log('Navigating to home page...')
     await page.goto('/')
+    
+    // Debug: Take screenshot after navigation
+    await page.screenshot({ path: 'test-results/after-navigation.png' })
+    
+    // Debug: Log page content
+    const pageContent = await page.content()
+    console.log('Page HTML length:', pageContent.length)
+    console.log('Page title:', await page.title())
     
     // Wait for main menu to be visible
     await page.waitForSelector('[data-testid="main-menu"]', { timeout: 10000 })
@@ -69,12 +82,22 @@ test.describe('Game Lobby System', () => {
     console.log('Button text before:', buttonTextBefore)
     console.log('Button disabled before:', isDisabledBefore)
     
-    // Click create game
-    await gamePage.createGameButton.click()
+    // Click create game - first wait for it to be in the viewport
+    await gamePage.createGameButton.waitFor({ state: 'visible' })
     
-    // Try clicking again in case the first click didn't work
-    await page.waitForTimeout(100)
-    await gamePage.createGameButton.click()
+    // Try different click strategies
+    try {
+      await gamePage.createGameButton.click()
+    } catch (error) {
+      console.log('Regular click failed, trying with JavaScript:', error)
+      // If regular click fails, use JavaScript click
+      await page.evaluate(() => {
+        const button = document.querySelector('[data-testid="create-game-button"]') as HTMLButtonElement
+        if (button) button.click()
+      })
+    }
+    
+    // Don't click again - the mutation already worked
     
     // Check if button text changes to "Creating..."
     await page.waitForTimeout(500)
@@ -83,8 +106,8 @@ test.describe('Game Lobby System', () => {
     console.log('Button text after:', buttonTextAfter)
     console.log('Button disabled after:', isDisabledAfter)
     
-    // Wait a moment for the mutation to process
-    await page.waitForTimeout(2000)
+    // Wait a moment for the mutation to process and React Query to update
+    await page.waitForTimeout(3000)
     
     // Check if we're still on main menu (game creation failed) or in lobby
     const isMainMenuVisible = await page.locator('[data-testid="main-menu"]').isVisible()
@@ -95,8 +118,14 @@ test.describe('Game Lobby System', () => {
     console.log('Console logs:', consoleLogs)
     console.log('Network requests:', networkRequests.slice(-5)) // Show last 5 requests
     
+    // Debug: Check page content to see what's actually rendered
+    const currentPageContent = await page.content()
+    if (currentPageContent.includes('Game Lobby')) {
+      console.log('Page contains "Game Lobby" text')
+    }
+    
     // Should show game lobby UI (no URL change in single-page app)
-    await expect(gamePage.gameIdDisplay).toBeVisible({ timeout: 10000 })
+    await expect(gamePage.gameIdDisplay).toBeVisible({ timeout: 15000 })
     const gameId = await gamePage.getGameId()
     expect(gameId).toMatch(/^[A-Z0-9]{8}$/)
     

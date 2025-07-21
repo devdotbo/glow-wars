@@ -144,7 +144,7 @@ export const getEntities = query({
       query = ctx.db
         .query('aiEntities')
         .withIndex('by_game_and_type', q =>
-          q.eq('gameId', args.gameId).eq('type', args.type)
+          q.eq('gameId', args.gameId).eq('type', args.type!)
         )
     } else {
       query = ctx.db
