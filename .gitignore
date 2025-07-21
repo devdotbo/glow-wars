@@ -1,10 +1,24 @@
-node_modules
+# Dependencies
+node_modules/
 package-lock.json
 yarn.lock
+.pnpm-store/
 
+# Environment variables
 !.env
 .env
 .env.local
+.env.*
+packages/*/.env
+packages/*/.env.local
+
+# Build outputs
+dist/
+build/
+.output/
+packages/*/dist/
+packages/*/build/
+packages/*/.output/
 .DS_Store
 .cache
 .vercel

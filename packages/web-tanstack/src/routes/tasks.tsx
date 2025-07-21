@@ -1,4 +1,4 @@
-import { api } from '../../convex/_generated/api'
+import { api } from '@glow-wars/convex/_generated/api'
 import { convexQuery } from '@convex-dev/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'

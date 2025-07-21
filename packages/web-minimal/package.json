@@ -1,0 +1,29 @@
+{
+  "name": "@glow-wars/web-minimal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@glow-wars/shared": "workspace:*",
+    "@glow-wars/convex": "workspace:*",
+    "pixi.js": "^8.0.0",
+    "convex": "^1.25.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@pixi/react": "^8.0.0",
+    "@tanstack/react-query": "^5.81.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
