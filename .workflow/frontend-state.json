@@ -1,0 +1,182 @@
+{
+  "overview": {
+    "description": "Frontend implementation tracking for Glow Wars game",
+    "framework": "TanStack Start + PixiJS",
+    "frontends": ["web-minimal", "web-tanstack"],
+    "renderingEngine": "PixiJS v8 (primitives only, no sprites)"
+  },
+  "currentPhase": null,
+  "completedPhases": [
+    {
+      "id": "e2e-testing",
+      "name": "E2E Testing Infrastructure",
+      "status": "completed",
+      "completedAt": "2025-01-21T11:30:00Z",
+      "description": "Complete Playwright E2E testing setup for multi-frontend testing",
+      "deliverables": [
+        "Playwright configuration",
+        "Test fixtures and helpers",
+        "4 comprehensive test suites",
+        "GitHub Actions CI/CD",
+        "Multi-frontend support"
+      ]
+    }
+  ],
+  "upcomingPhases": [
+    {
+      "id": "phase-1",
+      "name": "PixiJS Integration Setup",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Install PixiJS v8 dependencies",
+        "Create game canvas component",
+        "Set up responsive sizing",
+        "Implement game loop",
+        "Create PixiJS singleton",
+        "Add FPS counter"
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Primitive-Based Rendering",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Create primitive shapes for all entities",
+        "Implement glow effects with filters",
+        "Create particle systems",
+        "Build trail rendering",
+        "Add visual effects library"
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Core Game Rendering",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Player rendering with primitives",
+        "Movement interpolation",
+        "Territory visualization",
+        "Camera system",
+        "Minimap implementation"
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Visual Effects System",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Glow radius visualization",
+        "Power-up effects",
+        "Collision animations",
+        "Victory celebrations",
+        "Particle effects"
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "UI/HUD Implementation",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Score display",
+        "Timer component",
+        "Player list",
+        "Power-up indicators",
+        "Game state overlays"
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "Menu System",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Main menu",
+        "Game lobby",
+        "Settings panel",
+        "Victory/defeat screens",
+        "Pause menu"
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "Audio Integration",
+      "status": "pending",
+      "estimatedTokens": "5k",
+      "tasks": [
+        "Background music system",
+        "Sound effects",
+        "Audio settings",
+        "3D positional audio"
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "Performance Optimization",
+      "status": "pending",
+      "estimatedTokens": "10k",
+      "tasks": [
+        "Object pooling",
+        "Culling optimization",
+        "Texture atlasing",
+        "WebGL optimizations",
+        "Mobile performance"
+      ]
+    }
+  ],
+  "technicalDecisions": {
+    "rendering": "Primitives only (no sprites) for unique visual style",
+    "effects": "Heavy use of PixiJS filters for glow/neon effects",
+    "architecture": "ECS pattern for game objects",
+    "stateSync": "Convex real-time subscriptions with interpolation"
+  },
+  "frontendHealth": {
+    "webMinimal": {
+      "status": "prototype",
+      "hasGameLoop": true,
+      "hasRendering": false,
+      "hasUI": true,
+      "lastUpdated": "2025-01-20"
+    },
+    "webTanstack": {
+      "status": "scaffold",
+      "hasGameLoop": false,
+      "hasRendering": false,
+      "hasUI": false,
+      "lastUpdated": "2025-01-19"
+    }
+  },
+  "dependencies": {
+    "installed": [
+      "@playwright/test",
+      "vitest",
+      "@tanstack/react-start"
+    ],
+    "pending": [
+      "pixi.js@^8.0.0",
+      "@pixi/react@^8.0.0",
+      "@types/pixi.js",
+      "howler",
+      "@pixi/particle-emitter"
+    ]
+  },
+  "contextHints": {
+    "importantFiles": [
+      "packages/web-minimal/src/game/GlowWarsGame.ts",
+      "packages/web-minimal/src/ui/MenuUI.tsx",
+      "packages/e2e-tests/playwright.config.ts",
+      "docs-front/frontend-implementation-plan.md",
+      "docs-front/visual-design/game-aesthetic-overview.md"
+    ],
+    "keyDecisions": [
+      "No sprites - primitives only for unique aesthetic",
+      "PixiJS v8 for WebGL/WebGPU rendering",
+      "Multi-frontend approach for progressive enhancement",
+      "E2E tests written before implementation (TDD)"
+    ]
+  }
+}

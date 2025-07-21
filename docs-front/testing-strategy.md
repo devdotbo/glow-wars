@@ -4,14 +4,89 @@
 
 This document outlines the comprehensive testing approach for the Glow Wars frontend, covering unit tests, integration tests, visual regression tests, performance tests, and end-to-end tests.
 
+> **Note**: E2E testing infrastructure has been implemented in `packages/e2e-tests`. See the [Current Implementation](#current-implementation) section for details.
+
 ## Testing Stack
 
 - **Unit Tests**: Vitest
 - **Component Tests**: Vitest + React Testing Library
 - **Visual Tests**: Playwright + Percy
-- **E2E Tests**: Playwright
+- **E2E Tests**: Playwright ✅ (Implemented)
 - **Performance**: Lighthouse CI + Custom benchmarks
 - **Mocking**: MSW (Mock Service Worker)
+
+## Current Implementation
+
+### E2E Testing Infrastructure (Completed)
+
+The E2E testing infrastructure has been fully implemented in `packages/e2e-tests` with the following features:
+
+#### Architecture
+- **Location**: `packages/e2e-tests/` as a separate package in the monorepo
+- **Configuration**: Full Playwright setup with multi-frontend support
+- **CI/CD**: GitHub Actions workflow for automated testing
+
+#### Test Suites Implemented
+
+1. **Game Lobby Tests** (`tests/game-lobby.spec.ts`)
+   - Guest player creation
+   - Game creation and configuration
+   - Join game functionality
+   - Player limits and disconnection
+
+2. **Multiplayer Tests** (`tests/multiplayer.spec.ts`)
+   - Real-time synchronization
+   - Position updates
+   - Territory painting sync
+   - Multiple player interactions
+
+3. **Visual Regression Tests** (`tests/visual.spec.ts`)
+   - Main menu screenshots
+   - Game states visual testing
+   - Multiple viewport sizes
+   - Victory/defeat screens
+
+4. **Game Flow Tests** (`tests/game-flow.spec.ts`)
+   - Complete game scenarios
+   - Practice mode
+   - Power-up collection
+   - Victory conditions
+   - Network resilience
+
+#### Running E2E Tests
+
+```bash
+# Install Playwright browsers (first time only)
+pnpm playwright:install
+
+# Run all E2E tests
+pnpm test:e2e
+
+# Run with UI mode for debugging
+pnpm test:e2e:ui
+
+# Test specific frontend
+pnpm test:e2e:minimal   # web-minimal frontend
+pnpm test:e2e:tanstack  # web-tanstack frontend
+```
+
+#### Multi-Frontend Support
+
+The E2E tests support testing multiple frontend implementations:
+
+```typescript
+// Set via environment variable
+FRONTEND=minimal pnpm test:e2e  # Test web-minimal
+FRONTEND=tanstack pnpm test:e2e # Test web-tanstack
+```
+
+#### CI/CD Integration
+
+GitHub Actions workflow runs E2E tests automatically:
+- On push to main branch
+- On pull requests
+- Separate jobs for each frontend
+- Artifact uploads for failed tests
 
 ## Test Categories
 

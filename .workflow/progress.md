@@ -6,6 +6,7 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 
 ## Task Status Summary
 
+### Backend Tasks
 - [x] Task 1: Core Database Schema & Player Management
 - [x] Task 2: Game Session Management
 - [x] Task 3: Real-time Position Updates & Territory System
@@ -16,6 +17,9 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - [x] Task 8: Power-up System
 - [x] Task 9: Victory Conditions & Game End
 - [x] Task 10: Performance Optimizations
+
+### Infrastructure & Testing
+- [x] E2E Testing Infrastructure Implementation
 
 ---
 
@@ -645,6 +649,100 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 - targetId clearing in batch updates needs investigation (direct updates work)
 - Pre-existing collision tests still failing (5 tests from Task 6)
 - Total tests: 74 (68 passing, 5 collision + 1 spark test failing)
+
+---
+
+### E2E Testing Infrastructure Implementation
+
+**Status**: Completed  
+**Completed**: 2025-01-21T11:30:00Z  
+**Actual Tokens Used**: ~12k
+
+#### Deliverables Completed:
+
+- [x] Complete Playwright E2E testing infrastructure
+- [x] Multi-frontend testing support (web-minimal and web-tanstack)
+- [x] GitHub Actions CI/CD integration
+- [x] Comprehensive test suites for all game functionality
+- [x] Page objects pattern and custom fixtures
+
+#### Test Suites Created (25 tests total):
+
+**1. Game Lobby Tests** (7 tests):
+- [x] Guest player creation on first visit
+- [x] Game creation with configuration
+- [x] Join game with valid code
+- [x] Prevent joining non-existent games
+- [x] Player limits enforcement
+- [x] Start game functionality
+- [x] Player disconnection handling
+
+**2. Multiplayer Tests** (4 tests):
+- [x] Real-time player list synchronization
+- [x] Position synchronization between players
+- [x] Territory painting synchronization
+- [x] Simultaneous player interactions
+
+**3. Visual Regression Tests** (5 tests):
+- [x] Main menu appearance
+- [x] Game lobby states
+- [x] Active gameplay visuals
+- [x] Victory screen
+- [x] Different screen sizes
+
+**4. Game Flow Tests** (9 tests):
+- [x] Complete single-player practice game
+- [x] Full multiplayer game flow
+- [x] AI entity interactions
+- [x] Power-up collection and effects
+- [x] Victory conditions
+- [x] Game state persistence
+- [x] Network disconnection handling
+- [x] Statistics tracking
+- [x] Play again functionality
+
+#### Implementation Details:
+
+- **Architecture**: Monorepo-compatible structure in `packages/e2e-tests`
+- **Configuration**: Environment-based frontend switching (FRONTEND=minimal|tanstack)
+- **Test Fixtures**: Custom fixtures for game-specific functionality
+- **Page Objects**: Reusable components for common game interactions
+- **CI/CD**: Separate GitHub Actions jobs for each frontend with artifact uploads
+- **Documentation**: Comprehensive README with usage instructions
+
+#### Technical Decisions:
+
+- Chose test files over MCP server for version control and CI/CD integration
+- Implemented fixtures pattern for test isolation and reusability
+- Used environment variables for frontend selection
+- Configured visual regression testing with screenshot comparisons
+- Set up parallel test execution with proper resource management
+- Added retry logic for flaky tests in CI environment
+
+#### Files Created:
+
+- `packages/e2e-tests/` - Complete E2E testing package
+- `fixtures/game.fixture.ts` - Custom test fixtures
+- `helpers/game-page.ts` - Page object for game interactions
+- `helpers/convex-helper.ts` - Convex integration utilities
+- `tests/*.spec.ts` - 4 comprehensive test suites
+- `.github/workflows/e2e-tests.yml` - CI/CD workflow
+
+#### Integration Points:
+
+- **Root package.json**: Added E2E test scripts
+- **CI/CD Pipeline**: Automated testing on push/PR
+- **Monorepo Structure**: Seamless integration with pnpm workspace
+- **Multi-frontend Support**: Tests both minimal and TanStack implementations
+
+#### Future Enhancements:
+
+- Add performance testing suite
+- Implement accessibility testing
+- Add mobile device testing
+- Set up visual regression with Percy
+- Create test data factories
+- Add network simulation tests
 
 ---
 

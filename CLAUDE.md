@@ -28,6 +28,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm seed` - Import sample data into the Convex tasks table from sampleData.jsonl
 - `pnpm test` - Run tests with Vitest
 
+**E2E Testing:**
+
+- `pnpm test:e2e` - Run all E2E tests (uses default frontend)
+- `pnpm test:e2e:ui` - Run E2E tests with Playwright UI mode
+- `pnpm test:e2e:minimal` - Run E2E tests against web-minimal frontend
+- `pnpm test:e2e:tanstack` - Run E2E tests against web-tanstack frontend
+- `pnpm playwright:install` - Install Playwright browsers (run after initial setup)
+
 ## Architecture
 
 This is a full-stack TypeScript application using:
@@ -136,18 +144,27 @@ When working on Glow Wars tasks, follow these critical rules:
 1. **Start of Session**: ALWAYS read `.workflow/state.json` first to understand current progress
 2. **State Updates**: Update `.workflow/state.json` after every meaningful action
 3. **Test-Driven**: Write tests first, then implementation (TDD approach)
+   - For backend: Write unit tests first using Vitest
+   - For frontend: Write E2E tests first using Playwright
+   - Run tests frequently during development
 4. **Atomic Commits**: Each task completion gets its own commit
    - **IMPORTANT**: Always commit automatically after completing each task
    - Do NOT wait for explicit user request to commit
    - Use descriptive commit messages following the pattern: "feat: [description] (Task N)"
-5. **Progress Tracking**: Update `.workflow/progress.md` with test results and notes
-6. **Context Management**: Only load files needed for current task
-7. **Session Handoff**: Before ending, update state.json with specific nextAction
+5. **E2E Testing Before Commits**: 
+   - Run `pnpm test:e2e:minimal` before committing frontend changes
+   - Ensure CI will pass by running tests locally first
+   - Add new E2E tests when implementing new features
+6. **Progress Tracking**: Update `.workflow/progress.md` with test results and notes
+7. **Context Management**: Only load files needed for current task
+8. **Session Handoff**: Before ending, update state.json with specific nextAction
 
 **Important Files**:
 
-- `.workflow/state.json` - Current task state and progress
+- `.workflow/state.json` - Current backend task state and progress
+- `.workflow/frontend-state.json` - Frontend implementation phases and progress
 - `.workflow/progress.md` - Human-readable development log
-- `docs/glow-wars-technical-implementation.md` - Task specifications
+- `docs/glow-wars-technical-implementation.md` - Backend task specifications
+- `docs-front/frontend-implementation-plan.md` - Frontend implementation phases
 
 Never assume previous conversation context. The workflow state files are the single source of truth.
