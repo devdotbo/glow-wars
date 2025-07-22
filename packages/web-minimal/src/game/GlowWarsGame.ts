@@ -12,28 +12,38 @@ export class GlowWarsGame {
   } | null = null
 
   async init(canvas: HTMLCanvasElement) {
-    // Create PixiJS application
-    this.app = new Application()
+    console.log('GlowWarsGame: Starting initialization')
+    try {
+      // Create PixiJS application
+      this.app = new Application()
 
-    await this.app.init({
-      canvas,
-      width: GAME_CONFIG.MAP_WIDTH,
-      height: GAME_CONFIG.MAP_HEIGHT,
-      backgroundColor: 0x0a0a0a,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-      powerPreference: 'high-performance',
-    })
+      await this.app.init({
+        canvas,
+        width: GAME_CONFIG.MAP_WIDTH,
+        height: GAME_CONFIG.MAP_HEIGHT,
+        backgroundColor: 0x0a0a0a,
+        antialias: true,
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+        powerPreference: 'high-performance',
+      })
 
-    // Initialize layers
-    this.initializeLayers()
+      console.log('GlowWarsGame: PixiJS app initialized')
 
-    // Draw background grid
-    this.drawBackgroundGrid()
+      // Initialize layers
+      this.initializeLayers()
 
-    // Start the game loop
-    this.app.ticker.add(() => this.update())
+      // Draw background grid
+      this.drawBackgroundGrid()
+
+      // Start the game loop
+      this.app.ticker.add(() => this.update())
+      
+      console.log('GlowWarsGame: Initialization complete')
+    } catch (error) {
+      console.error('GlowWarsGame: Initialization failed', error)
+      throw error
+    }
   }
 
   private initializeLayers() {

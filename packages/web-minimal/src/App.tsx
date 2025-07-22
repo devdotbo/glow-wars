@@ -43,10 +43,14 @@ function GameContainer() {
     }
 
     // Initialize the game when entering active game
+    console.log('App: Creating new GlowWarsGame instance')
     const game = new GlowWarsGame()
     gameRef.current = game
 
-    game.init(canvasRef.current).catch(console.error)
+    console.log('App: Calling game.init with canvas:', canvasRef.current)
+    game.init(canvasRef.current).catch((error) => {
+      console.error('App: Game initialization failed:', error)
+    })
 
     // Cleanup on unmount or when leaving game
     return () => {

@@ -59,7 +59,7 @@ export default defineConfig({
 
   webServer: [
     {
-      command: 'cd ../convex && pnpm dev',
+      command: 'cd ../.. && npx convex dev',
       port: 5001,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
