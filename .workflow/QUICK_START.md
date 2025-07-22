@@ -11,21 +11,20 @@ pnpm dev
 - Convex: [YOUR_CONVEX_DASHBOARD_URL]
 
 ### 2. Current Issue to Fix
-**E2E Test Button Position Bug**
-- Button appears at y: -64 (outside viewport)
-- File: `packages/web-minimal/src/ui/MenuUI.css`
-- Test: `packages/e2e-tests/tests/game-lobby.spec.ts`
+**E2E Test: Join Existing Game Timeout**
+- Test times out after 31 seconds
+- File: `packages/e2e-tests/tests/game-lobby.spec.ts`
+- Issue: "should join existing game" test
 
 ```bash
 # Run single test to debug:
-pnpm test:e2e:minimal -- --grep "should create a new game"
+pnpm test:e2e:minimal -- --grep "should join existing game"
 ```
 
-### 3. Debug Steps
-1. Check CSS positioning in MenuUI
-2. Verify Playwright viewport size (1280x720)
-3. Look for absolute positioning issues
-4. Test in browser DevTools at same viewport size
+### 3. Recent Fixes Applied
+1. **CSS Positioning Fix** - Removed flexbox centering from #root, added overflow controls
+2. **React Query Fix** - Use `enabled` flag, not 'skip' string for conditional queries
+3. **Type Validation Fix** - Fixed enum: `time_limit` not `time`, field: `timeLimit` not `timeLimitMinutes`
 
 ## 📁 Key Files
 
@@ -46,12 +45,13 @@ pnpm test:e2e:minimal -- --grep "should create a new game"
 - Convex backend fully deployed
 - All game functions available
 - Guest player creation
-- React Query integration
-- 2/25 E2E tests passing
+- React Query integration (fixed)
+- Game creation flow
+- 3/25 E2E tests passing
 
 ## ❌ What's Not Working
-- Create Game button positioning in tests
-- 23/25 E2E tests failing
+- Join existing game test (timeout)
+- 22/25 E2E tests failing
 - web-tanstack frontend (not priority)
 
 ## 🎯 Next Steps After Fix
@@ -80,8 +80,9 @@ pnpm test:e2e:ui             # Run with UI mode
 pnpm dev:minimal             # Just the working frontend
 ```
 
-## 📝 Last Git Commit
-"fix: deploy Convex functions to root directory with TypeScript fixes"
+## 📝 Last Git Commits
+- "docs: add progress notes for E2E test fixes session"
+- "fix: resolve E2E test failures and game state issues"
 
 ---
-**Ready to continue!** Start by fixing the button positioning issue.
+**Ready to continue!** Start by debugging the "join existing game" test timeout.

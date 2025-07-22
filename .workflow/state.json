@@ -286,7 +286,7 @@
   ],
   "projectHealth": {
     "canRun": true,
-    "lastTestRun": "2025-01-21T23:00:00Z",
+    "lastTestRun": "2025-01-22T13:30:00Z",
     "allTestsPassing": false,
     "buildStatus": "success",
     "convexDeployment": "working",
@@ -306,13 +306,13 @@
       "docs/glow-wars-technical-implementation.md"
     ],
     "recentErrors": [
-      "Button element at y: -64 (outside viewport) in E2E tests",
-      "Regular click failed, had to use JavaScript click fallback"
+      "Join existing game test timeout after 31 seconds",
+      "ArgumentValidationError when gameId is empty string"
     ],
     "knownIssues": [
-      "CSS positioning issue with Create Game button",
-      "Clerk auth temporarily disabled",
-      "Need to investigate viewport size in Playwright tests"
+      "Join existing game E2E test failing",
+      "Clerk auth temporarily disabled (missing VITE_CLERK_FRONTEND_API_URL)",
+      "22/25 E2E tests still need fixes"
     ],
     "workingFeatures": [
       "Guest player creation",
