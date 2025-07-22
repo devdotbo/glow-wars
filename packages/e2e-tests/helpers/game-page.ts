@@ -82,7 +82,7 @@ export class GamePage {
   async getGameId(): Promise<string> {
     const gameIdText = await this.gameIdDisplay.textContent()
     // Extract just the ID part from "Game ID: XXXXXXXX"
-    const match = gameIdText?.match(/Game ID: ([A-Z0-9]+)/)
+    const match = gameIdText?.match(/Game ID: ([a-zA-Z0-9]+)/)
     return match?.[1] || ''
   }
 

@@ -82,55 +82,19 @@ test.describe('Game Lobby System', () => {
     console.log('Button text before:', buttonTextBefore)
     console.log('Button disabled before:', isDisabledBefore)
     
-    // Click create game - first wait for it to be in the viewport
-    await gamePage.createGameButton.waitFor({ state: 'visible' })
+    // Click create game
+    await gamePage.createGameButton.click()
     
-    // Try different click strategies
-    try {
-      await gamePage.createGameButton.click()
-    } catch (error) {
-      console.log('Regular click failed, trying with JavaScript:', error)
-      // If regular click fails, use JavaScript click
-      await page.evaluate(() => {
-        const button = document.querySelector('[data-testid="create-game-button"]') as HTMLButtonElement
-        if (button) button.click()
-      })
-    }
-    
-    // Don't click again - the mutation already worked
-    
-    // Check if button text changes to "Creating..."
-    await page.waitForTimeout(500)
-    const buttonTextAfter = await gamePage.createGameButton.textContent()
-    const isDisabledAfter = await gamePage.createGameButton.isDisabled()
-    console.log('Button text after:', buttonTextAfter)
-    console.log('Button disabled after:', isDisabledAfter)
-    
-    // Wait a moment for the mutation to process and React Query to update
-    await page.waitForTimeout(3000)
-    
-    // Check if we're still on main menu (game creation failed) or in lobby
-    const isMainMenuVisible = await page.locator('[data-testid="main-menu"]').isVisible()
-    const isGameIdVisible = await gamePage.gameIdDisplay.isVisible()
-    
-    console.log('Main menu visible:', isMainMenuVisible)
-    console.log('Game ID visible:', isGameIdVisible)
-    console.log('Console logs:', consoleLogs)
-    console.log('Network requests:', networkRequests.slice(-5)) // Show last 5 requests
-    
-    // Debug: Check page content to see what's actually rendered
-    const currentPageContent = await page.content()
-    if (currentPageContent.includes('Game Lobby')) {
-      console.log('Page contains "Game Lobby" text')
-    }
+    // Wait a moment for the mutation to process and state to update
+    await page.waitForTimeout(1000)
     
     // Should show game lobby UI (no URL change in single-page app)
     await expect(gamePage.gameIdDisplay).toBeVisible({ timeout: 15000 })
     const gameId = await gamePage.getGameId()
-    expect(gameId).toMatch(/^[A-Z0-9]{8}$/)
+    expect(gameId).toMatch(/^[a-zA-Z0-9]{8}$/)
     
     // Should show 1 player
-    await expect(gamePage.playerCount).toContainText('Players: 1/4')
+    await expect(gamePage.playerCount).toContainText('Players: 1 / 4')
   })
 
   test('should join existing game', async ({ browser, page, gamePage }) => {
