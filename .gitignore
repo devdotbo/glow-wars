@@ -49,5 +49,19 @@ packages/*/.output/
 /blob-report/
 /playwright/.cache/
 
+# Playwright test results in packages
+packages/*/test-results/
+packages/*/playwright-report/
+packages/*/*.spec.ts-snapshots/
+packages/*/debug-screenshot.png
+
+# Generated files
+packages/web-minimal/public/
+
+# Test/debug scripts
+test-connection.mjs
+packages/e2e-tests/tests/basic.spec.ts
+packages/e2e-tests/tests/simple-test.spec.ts
+
 app.config.timestamp_*.js
 .aider*
