@@ -2,6 +2,26 @@ import { test, expect } from '../fixtures/game.fixture'
 import { Page } from '@playwright/test'
 
 test.describe('Game Lobby System', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate to the page first
+    await page.goto('/')
+    
+    // Wait for app to load
+    await page.waitForLoadState('networkidle')
+    
+    // Check if we're in a game lobby and leave if necessary
+    const inGameLobby = await page.locator('[data-testid="game-id"]').isVisible().catch(() => false)
+    if (inGameLobby) {
+      // Leave the game
+      const leaveButton = page.locator('button:has-text("Leave Game")')
+      if (await leaveButton.isVisible()) {
+        await leaveButton.click()
+        // Wait for main menu to appear
+        await page.waitForSelector('[data-testid="main-menu"]', { timeout: 5000 })
+      }
+    }
+  })
+
   test('should create guest player on first visit', async ({ page, gamePage }) => {
     // Navigate to home page
     await page.goto('/')
@@ -117,8 +137,8 @@ test.describe('Game Lobby System', () => {
     await gamePage2.joinGame(gameId)
     
     // Both players should see updated count
-    await expect(gamePage.playerCount).toContainText('Players: 2/4')
-    await expect(gamePage2.playerCount).toContainText('Players: 2/4')
+    await expect(gamePage.playerCount).toContainText('Players: 2 / 4')
+    await expect(gamePage2.playerCount).toContainText('Players: 2 / 4')
     
     await context2.close()
   })
@@ -128,8 +148,9 @@ test.describe('Game Lobby System', () => {
     await gamePage.createGame(4)
     const gameId = await gamePage.getGameId()
     
-    // Start button should be disabled with 1 player
-    await expect(gamePage.startGameButton).toBeDisabled()
+    // Start button should be enabled with 1 player (single player mode)
+    await expect(gamePage.startGameButton).toBeEnabled()
+    await expect(gamePage.startGameButton).toContainText('Start Solo Game')
     
     // Second player joins
     const context2 = await browser.newContext()
@@ -140,8 +161,9 @@ test.describe('Game Lobby System', () => {
     await page2.waitForSelector('[data-testid="main-menu"]')
     await gamePage2.joinGame(gameId)
     
-    // Start button should be enabled for host
+    // Start button should still be enabled for host (now multiplayer)
     await expect(gamePage.startGameButton).toBeEnabled()
+    await expect(gamePage.startGameButton).toContainText('Start Game')
     
     // Non-host should see waiting message
     await expect(page2.locator('text=Waiting for host to start...')).toBeVisible()
