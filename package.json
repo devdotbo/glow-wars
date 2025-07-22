@@ -17,6 +17,9 @@
     "format": "prettier --write .",
     "clean": "pnpm -r clean && rm -rf node_modules"
   },
+  "dependencies": {
+    "convex": "^1.18.3"
+  },
   "devDependencies": {
     "prettier": "^3.6.1",
     "typescript": "^5.8.3",
