@@ -8,8 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 
-const frontend = process.env.FRONTEND || 'minimal'
-const baseURL = frontend === 'minimal' ? 'http://localhost:3001' : 'http://localhost:3000'
+const baseURL = 'http://localhost:3001'
 
 export default defineConfig({
   testDir: './tests',
@@ -68,10 +67,8 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command: frontend === 'minimal' 
-        ? 'cd ../web-minimal && pnpm dev' 
-        : 'cd ../web-tanstack && pnpm dev',
-      port: frontend === 'minimal' ? 3001 : 3000,
+      command: 'cd ../web-minimal && pnpm dev',
+      port: 3001,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',

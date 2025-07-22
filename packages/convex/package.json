@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./_generated/api": "./_generated/api.js",
-    "./_generated/dataModel": "./_generated/dataModel.d.ts"
+    "./_generated/api": "../../convex/_generated/api.js",
+    "./_generated/dataModel": "../../convex/_generated/dataModel.d.ts"
   },
   "scripts": {
-    "dev": "convex dev --typecheck=disable",
+    "dev": "convex dev",
     "deploy": "convex deploy",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
