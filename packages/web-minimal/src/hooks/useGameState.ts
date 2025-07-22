@@ -91,24 +91,23 @@ export function useGameState() {
     createGuest()
   }, [convex, guestPlayer])
 
-  // Query available games
-  const { data: availableGames = [] } = useQuery(
-    convexQuery(api.games.listAvailableGames, {})
-  )
+  // Query available games with refresh interval for real-time updates
+  const { data: availableGames = [] } = useQuery({
+    ...convexQuery(api.games.listAvailableGames, {}),
+    refetchInterval: 1000, // Refresh every second
+  })
 
   // Query current game if in one
-  const { data: currentGame } = useQuery(
-    convexQuery(api.games.getGame, 
-      gameSession.gameId ? { gameId: gameSession.gameId } : 'skip'
-    )
-  )
+  const { data: currentGame } = useQuery({
+    ...convexQuery(api.games.getGame, { gameId: gameSession.gameId || '' }),
+    enabled: !!gameSession.gameId,
+  })
 
   // Query game players if in game
-  const { data: gamePlayers = [] } = useQuery(
-    convexQuery(api.games.getGamePlayers,
-      gameSession.gameId ? { gameId: gameSession.gameId } : 'skip'
-    )
-  )
+  const { data: gamePlayers = [] } = useQuery({
+    ...convexQuery(api.games.getGamePlayers, { gameId: gameSession.gameId || '' }),
+    enabled: !!gameSession.gameId,
+  })
 
   // Create game mutation
   const createGameMutation = useMutation({

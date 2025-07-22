@@ -207,6 +207,26 @@ export const getGame = query({
       createdBy: v.id('players'),
       startedAt: v.optional(v.number()),
       finishedAt: v.optional(v.number()),
+      winnerId: v.optional(v.id('players')),
+      winCondition: v.optional(v.union(
+        v.literal('territory'),
+        v.literal('elimination'),
+        v.literal('time_limit')
+      )),
+      finalStats: v.optional(v.object({
+        duration: v.number(),
+        totalTerritory: v.number(),
+        playerStats: v.array(v.object({
+          playerId: v.id('players'),
+          score: v.number(),
+          territoryCaptured: v.number(),
+          eliminations: v.number(),
+          survivalTime: v.number(),
+          placement: v.number(),
+        })),
+      })),
+      timeLimit: v.number(),
+      lastActivity: v.optional(v.number()),
     }),
     v.null()
   ),

@@ -33,6 +33,18 @@ export function MenuUI() {
     )
   }
 
+  // Show loading if we have a gameId but game data hasn't loaded yet
+  if (gameSession.gameId && !currentGame) {
+    return (
+      <div className="menu-overlay">
+        <div className="menu-container">
+          <h1>Glow Wars</h1>
+          <div className="loading">Loading game...</div>
+        </div>
+      </div>
+    )
+  }
+  
   // In lobby waiting for game to start
   if (gameSession.gameId && currentGame && currentGame.status === 'waiting') {
     const playerCount = gamePlayers.length
@@ -150,7 +162,7 @@ export function MenuUI() {
                   key={game._id}
                   className={`game-item ${selectedGameId === game._id ? 'selected' : ''}`}
                   onClick={() => setSelectedGameId(game._id)}
-                  data-game-id={game._id}
+                  data-game-id={game._id.slice(-8)}
                 >
                   <div className="game-item-info">
                     <h3>{game.name}</h3>

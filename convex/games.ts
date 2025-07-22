@@ -207,6 +207,26 @@ export const getGame = query({
       createdBy: v.id('players'),
       startedAt: v.optional(v.number()),
       finishedAt: v.optional(v.number()),
+      winnerId: v.optional(v.id('players')),
+      winCondition: v.optional(v.union(
+        v.literal('territory'),
+        v.literal('elimination'),
+        v.literal('time_limit')
+      )),
+      finalStats: v.optional(v.object({
+        duration: v.number(),
+        totalTerritory: v.number(),
+        playerStats: v.array(v.object({
+          playerId: v.id('players'),
+          score: v.number(),
+          territoryCaptured: v.number(),
+          eliminations: v.number(),
+          survivalTime: v.number(),
+          placement: v.number(),
+        })),
+      })),
+      timeLimit: v.number(),
+      lastActivity: v.optional(v.number()),
     }),
     v.null()
   ),
@@ -261,7 +281,7 @@ export const listAvailableGames = query({
       .withIndex('by_status', q => q.eq('status', 'waiting'))
       .collect()
 
-    // Add player count to each game
+    // Add player count to each game and filter out full games
     const gamesWithPlayerCount = await Promise.all(
       waitingGames.map(async game => {
         const players = await ctx.db
@@ -287,6 +307,11 @@ export const listAvailableGames = query({
       })
     )
 
-    return gamesWithPlayerCount
+    // Filter out games that are full
+    const availableGames = gamesWithPlayerCount.filter(
+      game => game.playerCount < game.maxPlayers
+    )
+
+    return availableGames
   },
 })
