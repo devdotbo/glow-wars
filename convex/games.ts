@@ -1,8 +1,9 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import { api } from './_generated/api'
 
 const INITIAL_GLOW_RADIUS = 50
-const MIN_PLAYERS_TO_START = 2
+const MIN_PLAYERS_TO_START = 1
 
 // Helper function to generate random position
 function generateRandomPosition(mapSize: number = 1000): { x: number; y: number } {
@@ -183,6 +184,37 @@ export const startGame = mutation({
       status: 'active',
       startedAt: Date.now(),
     })
+
+    // Check if single player mode
+    const isSinglePlayer = players.length === 1
+    
+    if (isSinglePlayer) {
+      // Spawn AI entities for single player mode
+      // Start with some friendly sparks
+      await ctx.scheduler.runAfter(0, api.ai.sparks.spawnSparks, {
+        gameId: args.gameId,
+        count: 8, // More sparks for single player
+      })
+      
+      // Add some challenge with creepers after a short delay
+      await ctx.scheduler.runAfter(3000, api.ai.creepers.spawnCreepers, {
+        gameId: args.gameId,
+        count: 3, // Balanced number of creepers
+      })
+      
+      // Schedule periodic spawning to maintain gameplay
+      // More sparks every 30 seconds
+      await ctx.scheduler.runAfter(30000, api.ai.sparks.spawnSparks, {
+        gameId: args.gameId,
+        count: 4,
+      })
+      
+      // Additional creeper every minute for increasing difficulty
+      await ctx.scheduler.runAfter(60000, api.ai.creepers.spawnCreepers, {
+        gameId: args.gameId,
+        count: 1,
+      })
+    }
 
     return null
   },
