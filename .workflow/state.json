@@ -263,8 +263,8 @@
         "All packages/convex/*.ts files moved to packages/convex/convex/"
       ],
       "testsWritten": 0,
-      "testsPassing": "3/8 game lobby tests passing, 3/25 total E2E tests",
-      "lastAction": "Implemented single player mode with AI spawning and adjusted victory conditions",
+      "testsPassing": "4/8 game lobby tests passing, 4/25 total E2E tests",
+      "lastAction": "Fixed E2E tests for single player mode, built shared package, added debug logging",
       "criticalFixes": [
         "Convex functions must be in convex/ subdirectory, not package root",
         "Temporarily disabled auth.config.ts due to missing VITE_CLERK_FRONTEND_API_URL",
@@ -302,7 +302,7 @@
     "allTestsPassing": false,
     "buildStatus": "success",
     "convexDeployment": "working",
-    "e2eTestsPassing": "3/8 game lobby tests pass with manual server start",
+    "e2eTestsPassing": "4/8 game lobby tests pass, playwright config fixed",
     "backendComplete": true,
     "frontendStatus": "prototype - needs PixiJS for game rendering",
     "architectureSimplified": true,
