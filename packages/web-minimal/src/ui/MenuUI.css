@@ -18,6 +18,8 @@
   padding: 2rem;
   min-width: 400px;
   max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
   border: 1px solid #2a2a2a;
 }
@@ -173,6 +175,8 @@ label {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .game-item {
