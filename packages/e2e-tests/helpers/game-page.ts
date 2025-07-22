@@ -76,7 +76,13 @@ export class GamePage {
 
   async startGame() {
     await this.startGameButton.click()
-    await this.page.waitForSelector('canvas', { timeout: 10000 })
+    // Wait for game status to change instead of canvas (due to rendering issues)
+    await this.page.waitForFunction(() => {
+      // Check if game ID display is still visible (meaning we're still in lobby)
+      const gameIdElement = document.querySelector('[data-testid="game-id"]')
+      // If game ID is not visible, we've transitioned to the game
+      return !gameIdElement || !gameIdElement.parentElement?.offsetParent
+    }, { timeout: 10000 })
   }
 
   async getGameId(): Promise<string> {

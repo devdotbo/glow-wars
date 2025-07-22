@@ -193,7 +193,7 @@ test.describe('Game Lobby System', () => {
     await gamePage2.joinGame(gameId)
     
     // Game should be full
-    await expect(gamePage.playerCount).toContainText('Players: 2/2')
+    await expect(gamePage.playerCount).toContainText('Players: 2 / 2')
     
     // Third player tries to join
     const context3 = await browser.newContext()
@@ -218,9 +218,10 @@ test.describe('Game Lobby System', () => {
     await page.reload()
     
     // Should still be in the same game
-    await page.waitForURL(`**/game/${gameId}`)
+    // Note: The app doesn't change URL when in game, so we check for game lobby UI instead
+    await expect(gamePage.gameIdDisplay).toBeVisible()
     await expect(gamePage.gameIdDisplay).toContainText(gameId)
-    await expect(gamePage.playerCount).toContainText('Players: 1/4')
+    await expect(gamePage.playerCount).toContainText('Players: 1 / 4')
   })
 
   test('should handle player disconnection', async ({ browser, page, gamePage }) => {
@@ -238,7 +239,7 @@ test.describe('Game Lobby System', () => {
     await gamePage2.joinGame(gameId)
     
     // Verify 2 players
-    await expect(gamePage.playerCount).toContainText('Players: 2/4')
+    await expect(gamePage.playerCount).toContainText('Players: 2 / 4')
     
     // Second player disconnects
     await context2.close()
