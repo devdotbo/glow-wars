@@ -57,22 +57,13 @@ export default defineConfig({
     },
   ],
 
-  webServer: [
-    {
-      command: 'cd ../.. && npx convex dev',
-      port: 5001,
-      timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-    {
-      command: 'cd ../web-minimal && pnpm dev',
-      port: 3001,
-      timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-  ],
+  webServer: {
+    // Single combined command to start both servers
+    command: 'cd ../.. && (npx convex dev & sleep 5 && cd packages/web-minimal && pnpm dev)',
+    port: 3001,
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  },
 })
