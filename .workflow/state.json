@@ -264,7 +264,7 @@
       ],
       "testsWritten": 0,
       "testsPassing": "3/25 E2E tests passing (guest player, button display, create game)",
-      "lastAction": "Fixed CSS positioning and React Query issues, game creation flow working",
+      "lastAction": "Simplified architecture by removing duplicates, fixed game ID mismatch, enabled TypeScript checks",
       "criticalFixes": [
         "Convex functions must be in convex/ subdirectory, not package root",
         "Temporarily disabled auth.config.ts due to missing VITE_CLERK_FRONTEND_API_URL",
@@ -279,7 +279,13 @@
         "Removed conflicting flexbox centering from #root element",
         "Fixed React Query enabled pattern for conditional queries",
         "Updated game ID regex to handle lowercase letters",
-        "Fixed getGame return type validation to match schema"
+        "Fixed getGame return type validation to match schema",
+        "Fixed game ID format mismatch in MenuUI data-game-id (8-char slice)",
+        "Removed web-tanstack frontend - consolidated to single frontend",
+        "Removed duplicate Convex codebase in packages/convex/convex/",
+        "Enabled TypeScript checks everywhere (removed --typecheck=disable)",
+        "Added logging infrastructure (.workflow/dev-with-logs.sh)",
+        "Updated listAvailableGames to filter out full games"
       ],
       "nextAction": "Fix remaining E2E test failures and run full test suite"
     }
@@ -290,9 +296,11 @@
     "allTestsPassing": false,
     "buildStatus": "success",
     "convexDeployment": "working",
-    "e2eTestsPassing": "3/25",
+    "e2eTestsPassing": "3/25 (may improve with game ID fix)",
     "backendComplete": true,
-    "frontendStatus": "prototype"
+    "frontendStatus": "prototype",
+    "architectureSimplified": true,
+    "codeReduction": "~6,800 lines removed"
   },
   "contextHints": {
     "importantFiles": [
@@ -310,15 +318,20 @@
       "ArgumentValidationError when gameId is empty string"
     ],
     "knownIssues": [
-      "Join existing game E2E test failing",
+      "Join existing game E2E test may still timeout (but ID mismatch fixed)",
       "Clerk auth temporarily disabled (missing VITE_CLERK_FRONTEND_API_URL)",
-      "22/25 E2E tests still need fixes"
+      "22/25 E2E tests still need fixes",
+      "Need to verify architecture changes didn't break anything"
     ],
     "workingFeatures": [
       "Guest player creation",
       "Convex backend fully deployed",
       "All game mutations available",
-      "React Query integration fixed"
+      "React Query integration fixed",
+      "Single frontend architecture (web-minimal)",
+      "Logging infrastructure for development",
+      "TypeScript checks enabled everywhere",
+      "Game ID format handling (8-char slice)"
     ],
     "dependencies": [
       "convex",
