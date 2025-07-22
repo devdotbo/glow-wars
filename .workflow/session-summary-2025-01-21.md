@@ -130,7 +130,7 @@ Call log:
 
 ### Working URLs
 - Game: http://localhost:3001
-- Convex Dashboard: https://dashboard.convex.dev/d/calculating-swan-893
+- Convex Dashboard: [YOUR_CONVEX_DASHBOARD_URL]
 
 ### Key Commands
 ```bash

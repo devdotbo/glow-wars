@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **IMPORTANT**: Always use `pnpm` for package management in this project. Never use `npm` or `yarn`.
 
+## Security and Privacy
+
+**CRITICAL**: Never include personal or sensitive information in any files, including:
+- Deployment URLs (e.g., Convex dashboard URLs like `https://dashboard.convex.dev/d/your-project-123`)
+- API keys, tokens, or secrets
+- Personal email addresses or usernames
+- Production database URLs or connection strings
+- Any environment-specific identifiers
+
+Always use placeholders instead:
+- ✅ `[YOUR_CONVEX_DASHBOARD_URL]`
+- ✅ `[YOUR_API_KEY]`
+- ✅ `[YOUR_PROJECT_ID]`
+- ❌ `https://dashboard.convex.dev/d/calculating-swan-893`
+- ❌ `sk_live_abcd1234...`
+
 ## Commands
 
 **Development:**

@@ -8,7 +8,7 @@ pnpm dev
 ```
 - Web-minimal: http://localhost:3001 ✅ (working)
 - Web-tanstack: http://localhost:3000 ⚠️ (has errors)
-- Convex: https://dashboard.convex.dev/d/calculating-swan-893
+- Convex: [YOUR_CONVEX_DASHBOARD_URL]
 
 ### 2. Current Issue to Fix
 **E2E Test Button Position Bug**
