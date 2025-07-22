@@ -25,7 +25,43 @@ This document tracks the detailed progress of Glow Wars game development. Each t
 
 ---
 
-## Session: January 21, 2025 (Evening)
+## Session: January 22, 2025 (Morning)
+
+### Continuing E2E Test Fixes
+
+#### Fixed CSS Positioning Issue ✅
+- **Problem**: Create Game button was at y: -64 (outside viewport)
+- **Root Cause**: #root had conflicting flexbox centering + too many games pushed content down
+- **Solution**:
+  1. Removed `display: flex; align-items: center; justify-content: center` from #root
+  2. Added `max-height: 90vh; overflow-y: auto` to `.menu-container`
+  3. Added `max-height: 300px; overflow-y: auto` to `.game-list`
+  
+#### Fixed Game Lobby Transition ✅
+- **Problem**: After creating game, UI stayed on main menu
+- **Solution**:
+  1. Fixed React Query `enabled` pattern (was using 'skip' string incorrectly)
+  2. Fixed `getGame` return type validation to include all schema fields
+  3. Fixed enum mismatch: `time_limit` not `time`, `timeLimit` not `timeLimitMinutes`
+
+#### E2E Test Progress
+- **3/25 tests passing** (up from 2/25)
+- Tests passing:
+  1. Guest player creation ✅
+  2. Create game button display ✅
+  3. Create new game ✅
+- Fixed issues:
+  - Game ID regex updated to handle lowercase letters
+  - Player count text expectation updated to include spaces
+
+#### Key Learnings
+1. **CSS positioning matters** - Overflow and viewport constraints affect test reliability
+2. **Type validation is strict** - Convex validators must match schema exactly
+3. **React Query patterns** - Use `enabled` flag, not 'skip' string for conditional queries
+
+---
+
+# Session: January 21, 2025 (Evening)
 
 ### Major Achievement: Fixed Convex Deployment 🎉
 
