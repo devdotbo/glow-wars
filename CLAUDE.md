@@ -49,7 +49,6 @@ Always use placeholders instead:
 - `pnpm test:e2e` - Run all E2E tests (uses default frontend)
 - `pnpm test:e2e:ui` - Run E2E tests with Playwright UI mode
 - `pnpm test:e2e:minimal` - Run E2E tests against web-minimal frontend
-- `pnpm test:e2e:tanstack` - Run E2E tests against web-tanstack frontend
 - `pnpm playwright:install` - Install Playwright browsers (run after initial setup)
 
 ## Architecture

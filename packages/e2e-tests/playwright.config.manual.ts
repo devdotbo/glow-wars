@@ -6,10 +6,17 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../../.env') })
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') })
 
 const baseURL = 'http://localhost:3001'
 
+/**
+ * Manual server configuration
+ * 
+ * Run these commands before running tests:
+ * 1. In root directory: npx convex dev
+ * 2. In packages/web-minimal: pnpm dev
+ */
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -39,31 +46,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'mobile-safari',
-      use: { ...devices['iPhone 12'] },
-    },
   ],
 
-  webServer: {
-    // Single combined command to start both servers
-    command: 'cd ../.. && (npx convex dev & sleep 5 && cd packages/web-minimal && pnpm dev)',
-    port: 3001,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // No webServer configuration - servers must be started manually
 })

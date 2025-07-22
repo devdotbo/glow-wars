@@ -33,10 +33,23 @@ export function MenuUI() {
     )
   }
 
+  // Show loading if we have a gameId but game data hasn't loaded yet
+  if (gameSession.gameId && !currentGame) {
+    return (
+      <div className="menu-overlay">
+        <div className="menu-container">
+          <h1>Glow Wars</h1>
+          <div className="loading">Loading game...</div>
+        </div>
+      </div>
+    )
+  }
+  
   // In lobby waiting for game to start
   if (gameSession.gameId && currentGame && currentGame.status === 'waiting') {
     const playerCount = gamePlayers.length
-    const canStart = gameSession.isHost && playerCount >= 2
+    const canStart = gameSession.isHost && playerCount >= 1
+    const isSinglePlayer = playerCount === 1
 
     return (
       <div className="menu-overlay">
@@ -47,6 +60,12 @@ export function MenuUI() {
             <h2>{currentGame.name}</h2>
             <p className="game-code" data-testid="game-id">Game ID: {gameSession.gameId.slice(-8)}</p>
             <p data-testid="player-count">Players: {playerCount} / {currentGame.maxPlayers}</p>
+            {isSinglePlayer && (
+              <p className="game-mode">Single Player Mode - Battle against AI!</p>
+            )}
+            {!isSinglePlayer && playerCount > 1 && (
+              <p className="game-mode">Multiplayer Mode - {playerCount} players</p>
+            )}
           </div>
 
           <div className="player-list" data-testid="players-list">
@@ -72,7 +91,7 @@ export function MenuUI() {
                 className="primary-button"
               >
                 {isStartingGame ? 'Starting...' : 
-                 !canStart ? `Need ${2 - playerCount} more players` : 
+                 isSinglePlayer ? 'Start Solo Game' : 
                  'Start Game'}
               </button>
             ) : (
@@ -150,7 +169,7 @@ export function MenuUI() {
                   key={game._id}
                   className={`game-item ${selectedGameId === game._id ? 'selected' : ''}`}
                   onClick={() => setSelectedGameId(game._id)}
-                  data-game-id={game._id}
+                  data-game-id={game._id.slice(-8)}
                 >
                   <div className="game-item-info">
                     <h3>{game.name}</h3>

@@ -10,8 +10,7 @@
     "test:headed": "playwright test --headed",
     "test:ci": "playwright test --reporter=html",
     "test:report": "playwright show-report",
-    "test:minimal": "FRONTEND=minimal playwright test",
-    "test:tanstack": "FRONTEND=tanstack playwright test",
+    "test:minimal": "playwright test",
     "test:visual": "playwright test tests/visual.spec.ts",
     "test:lobby": "playwright test tests/game-lobby.spec.ts",
     "playwright:install": "playwright install --with-deps"

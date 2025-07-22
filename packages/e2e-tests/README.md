@@ -35,10 +35,9 @@ pnpm test:headed    # Run in headed browser
 pnpm test:ci        # CI mode with HTML reporter
 ```
 
-### Target Specific Frontend
+### Target Frontend
 ```bash
-pnpm test:minimal   # Test web-minimal frontend
-pnpm test:tanstack  # Test web-tanstack frontend
+pnpm test:minimal   # Test web-minimal frontend (default)
 ```
 
 ## Test Structure
