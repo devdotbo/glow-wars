@@ -108,6 +108,27 @@ export function useGameState() {
     ...convexQuery(api.games.getGamePlayers, { gameId: gameSession.gameId || '' }),
     enabled: !!gameSession.gameId,
   })
+  
+  // Subscribe to all player positions in the game
+  const { data: playerPositions = [] } = useQuery({
+    ...convexQuery(api.positions.streamPositions, { gameId: gameSession.gameId || '' }),
+    enabled: !!gameSession.gameId && currentGame?.status === 'active',
+    refetchInterval: 100, // Update positions frequently for smooth gameplay
+  })
+  
+  // Subscribe to AI entities in the game
+  const { data: aiEntities = [] } = useQuery({
+    ...convexQuery(api.ai.entities.getEntities, { gameId: gameSession.gameId || '' }),
+    enabled: !!gameSession.gameId && currentGame?.status === 'active',
+    refetchInterval: 200, // Update AI less frequently than players
+  })
+  
+  // Subscribe to territory map
+  const { data: territoryMap = [] } = useQuery({
+    ...convexQuery(api.territory.getTerritoryMap, { gameId: gameSession.gameId || '' }),
+    enabled: !!gameSession.gameId && currentGame?.status === 'active',
+    refetchInterval: 500, // Territory updates less frequently
+  })
 
   // Create game mutation
   const createGameMutation = useMutation({
@@ -204,6 +225,22 @@ export function useGameState() {
     },
   })
 
+  // Position update mutation
+  const updatePositionMutation = useMutation({
+    mutationFn: async ({ x, y }: { x: number; y: number }) => {
+      if (!gameSession.gameId || !gameSession.playerId) {
+        throw new Error('Not in game')
+      }
+      
+      await convex.mutation(api.positions.updatePosition, {
+        gameId: gameSession.gameId,
+        playerId: gameSession.playerId,
+        x,
+        y,
+      })
+    },
+  })
+
   return {
     // Player info
     guestPlayer,
@@ -213,6 +250,11 @@ export function useGameState() {
     currentGame,
     gamePlayers,
     
+    // Game data subscriptions
+    playerPositions,
+    aiEntities,
+    territoryMap,
+    
     // Available games
     availableGames,
     
@@ -221,6 +263,7 @@ export function useGameState() {
     joinGame: joinGameMutation.mutate,
     leaveGame: leaveGameMutation.mutate,
     startGame: startGameMutation.mutate,
+    updatePosition: updatePositionMutation.mutate,
     
     // Loading states
     isCreatingGame: createGameMutation.isPending,

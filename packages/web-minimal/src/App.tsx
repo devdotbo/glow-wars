@@ -27,7 +27,16 @@ export function App() {
 function GameContainer() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gameRef = useRef<GlowWarsGame | null>(null)
-  const { currentGame, gameSession } = useGameState()
+  const { 
+    currentGame, 
+    gameSession, 
+    guestPlayer,
+    gamePlayers,
+    playerPositions,
+    aiEntities,
+    territoryMap,
+    updatePosition
+  } = useGameState()
 
   // Check if we should show the game or menu
   const isInActiveGame = currentGame && currentGame.status === 'active' && gameSession.gameId
@@ -58,6 +67,30 @@ function GameContainer() {
       gameRef.current = null
     }
   }, [isInActiveGame])
+  
+  // Update game data whenever it changes
+  useEffect(() => {
+    if (!gameRef.current || !isInActiveGame || !gameSession.playerId) return
+    
+    // Prepare game players with full info
+    const gamePlayersWithInfo = gamePlayers.map(gp => {
+      const player = gp.player
+      return {
+        playerId: gp.playerId,
+        name: player?.name || 'Unknown',
+        color: player?.color || '#ffffff',
+      }
+    })
+    
+    gameRef.current.setGameData({
+      playerPositions,
+      aiEntities,
+      territoryMap,
+      gamePlayers: gamePlayersWithInfo,
+      localPlayerId: gameSession.playerId,
+      onPositionUpdate: updatePosition,
+    })
+  }, [playerPositions, aiEntities, territoryMap, gamePlayers, gameSession.playerId, isInActiveGame, updatePosition])
 
   // Show menu if not in active game
   if (!isInActiveGame) {
