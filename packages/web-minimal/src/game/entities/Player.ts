@@ -29,9 +29,13 @@ export class Player {
   private targetY: number
   private glowRadius: number
   private isAlive: boolean = true
+  private lastX: number = 0
+  private lastY: number = 0
+  private lastRenderTime: number = 0
   
   private static TRAIL_LENGTH = 10
   private static TRAIL_FADE_TIME = 500 // milliseconds
+  private static TRAIL_UPDATE_INTERVAL = 50 // milliseconds
 
   constructor(options: PlayerOptions) {
     this.id = options.id
@@ -110,8 +114,18 @@ export class Player {
     this.container.x = this.x
     this.container.y = this.y
     
-    // Update trail
-    this.renderTrail()
+    // Only update trail if we've moved significantly or enough time has passed
+    const now = Date.now()
+    const distanceMoved = Math.sqrt(
+      Math.pow(this.x - this.lastX, 2) + Math.pow(this.y - this.lastY, 2)
+    )
+    
+    if (distanceMoved > 2 || now - this.lastRenderTime > Player.TRAIL_UPDATE_INTERVAL) {
+      this.renderTrail()
+      this.lastX = this.x
+      this.lastY = this.y
+      this.lastRenderTime = now
+    }
   }
 
   private render() {
@@ -122,17 +136,17 @@ export class Player {
       for (let i = 3; i > 0; i--) {
         const alpha = 0.1 * (4 - i)
         const radius = GAME_CONFIG.DEFAULT_PLAYER_RADIUS + (this.glowRadius * 0.3 * i)
-        this.glowGraphics.beginFill(this.color, alpha)
-        this.glowGraphics.drawCircle(0, 0, radius)
-        this.glowGraphics.endFill()
+        this.glowGraphics.fill({ color: this.color, alpha })
+        this.glowGraphics.circle(0, 0, radius)
+        this.glowGraphics.fill()
       }
     }
     
     // Clear and redraw player
     this.graphics.clear()
-    this.graphics.beginFill(this.color)
-    this.graphics.drawCircle(0, 0, GAME_CONFIG.DEFAULT_PLAYER_RADIUS)
-    this.graphics.endFill()
+    this.graphics.fill({ color: this.color })
+    this.graphics.circle(0, 0, GAME_CONFIG.DEFAULT_PLAYER_RADIUS)
+    this.graphics.fill()
     
     // Add white center for contrast
     this.graphics.beginFill(0xffffff, 0.8)
@@ -159,9 +173,9 @@ export class Player {
           const localX = pos.x - this.x
           const localY = pos.y - this.y
           
-          trailGraphics.beginFill(this.color, alpha)
-          trailGraphics.drawCircle(localX, localY, radius)
-          trailGraphics.endFill()
+          trailGraphics.fill({ color: this.color, alpha })
+          trailGraphics.circle(localX, localY, radius)
+          trailGraphics.fill()
         }
       }
     }

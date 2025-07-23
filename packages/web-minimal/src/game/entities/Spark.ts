@@ -20,6 +20,8 @@ export class Spark {
   private state: string = 'wander'
   private health: number = 10
   private pulseTime: number = 0
+  private needsRedraw: boolean = true
+  private lastState: string = 'wander'
   
   private static SPARK_RADIUS = 8
   private static SPARK_COLOR = 0xffff00 // Yellow
@@ -53,7 +55,10 @@ export class Spark {
   }
 
   setState(state: string) {
-    this.state = state
+    if (this.state !== state) {
+      this.state = state
+      this.needsRedraw = true
+    }
   }
 
   setHealth(health: number) {
@@ -74,13 +79,21 @@ export class Spark {
     
     // Update pulse animation
     this.pulseTime += deltaTime
-    this.render()
+    
+    // Animate using scale instead of redrawing
+    const pulse = Math.sin(this.pulseTime * 5) * 0.1 + 1
+    this.graphics.scale.set(pulse)
+    this.glowGraphics.scale.set(pulse)
+    
+    // Only redraw if needed
+    if (this.needsRedraw) {
+      this.render()
+      this.needsRedraw = false
+    }
   }
 
   private render() {
-    // Calculate pulse effect
-    const pulse = Math.sin(this.pulseTime * 5) * 0.2 + 1
-    const glowRadius = Spark.SPARK_RADIUS * 2 * pulse
+    const glowRadius = Spark.SPARK_RADIUS * 2
     
     // Clear and redraw glow
     this.glowGraphics.clear()
@@ -89,23 +102,23 @@ export class Spark {
     for (let i = 3; i > 0; i--) {
       const alpha = this.state === 'flee' ? 0.15 * (4 - i) : 0.1 * (4 - i)
       const radius = glowRadius * (1 + i * 0.3)
-      this.glowGraphics.beginFill(Spark.SPARK_COLOR, alpha)
-      this.glowGraphics.drawCircle(0, 0, radius)
-      this.glowGraphics.endFill()
+      this.glowGraphics.fill({ color: Spark.SPARK_COLOR, alpha })
+      this.glowGraphics.circle(0, 0, radius)
+      this.glowGraphics.fill()
     }
     
     // Clear and redraw spark
     this.graphics.clear()
     
     // Outer glow ring
-    this.graphics.beginFill(Spark.SPARK_COLOR, 0.8)
-    this.graphics.drawCircle(0, 0, Spark.SPARK_RADIUS * pulse)
-    this.graphics.endFill()
+    this.graphics.fill({ color: Spark.SPARK_COLOR, alpha: 0.8 })
+    this.graphics.circle(0, 0, Spark.SPARK_RADIUS)
+    this.graphics.fill()
     
     // Inner bright core
-    this.graphics.beginFill(0xffffff, 0.9)
-    this.graphics.drawCircle(0, 0, Spark.SPARK_RADIUS * 0.5 * pulse)
-    this.graphics.endFill()
+    this.graphics.fill({ color: 0xffffff, alpha: 0.9 })
+    this.graphics.circle(0, 0, Spark.SPARK_RADIUS * 0.5)
+    this.graphics.fill()
     
     // Add particles effect when fleeing
     if (this.state === 'flee' && Math.random() < 0.3) {
