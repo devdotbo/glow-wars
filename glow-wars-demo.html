@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glow Wars - Visual Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        #canvas-container {
+            border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Glow Wars - Visual Demo (No Interaction)</div>
+    <div id="canvas-container"></div>
+
+    <script src="https://pixijs.download/release/pixi.js"></script>
+    <script>
+        // Game constants
+        const GAME_WIDTH = 800;
+        const GAME_HEIGHT = 600;
+        const GRID_SIZE = 40;
+        
+        // Player colors from the design doc
+        const PLAYER_COLORS = [
+            0x00FF00, // Neon Green
+            0xFF0066, // Hot Pink
+            0x00CCFF, // Electric Cyan
+            0xFFAA00, // Laser Orange
+            0xFF00FF, // Plasma Magenta
+            0xFFFF00, // Volt Yellow
+        ];
+
+        // Initialize PixiJS
+        const app = new PIXI.Application();
+        
+        async function init() {
+            await app.init({
+                width: GAME_WIDTH,
+                height: GAME_HEIGHT,
+                backgroundColor: 0x0a0a0a,
+                antialias: true,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true,
+            });
+            
+            document.getElementById('canvas-container').appendChild(app.canvas);
+            
+            // Create layers
+            const backgroundLayer = new PIXI.Container();
+            const territoryLayer = new PIXI.Container();
+            const particleLayer = new PIXI.Container();
+            const orbLayer = new PIXI.Container();
+            
+            app.stage.addChild(backgroundLayer);
+            app.stage.addChild(territoryLayer);
+            app.stage.addChild(particleLayer);
+            app.stage.addChild(orbLayer);
+            
+            // Draw background grid
+            drawGrid(backgroundLayer);
+            
+            // Create glowing orbs
+            const orbs = [];
+            for (let i = 0; i < 5; i++) {
+                const orb = createGlowingOrb(PLAYER_COLORS[i], 20 + Math.random() * 20);
+                orb.x = 100 + i * 120;
+                orb.y = GAME_HEIGHT / 2;
+                orb.userData = {
+                    baseX: orb.x,
+                    baseY: orb.y,
+                    timeOffset: i * 1.2,
+                    speed: 0.5 + Math.random() * 0.5,
+                    radiusX: 50 + Math.random() * 100,
+                    radiusY: 50 + Math.random() * 100,
+                    trail: [],
+                    particles: [],
+                    color: PLAYER_COLORS[i]
+                };
+                orbLayer.addChild(orb);
+                orbs.push(orb);
+            }
+            
+            // Animation loop
+            let time = 0;
+            app.ticker.add((delta) => {
+                time += delta.deltaTime * 0.016; // Convert to seconds
+                
+                // Update orbs
+                orbs.forEach((orb, index) => {
+                    const data = orb.userData;
+                    
+                    // Sine wave movement
+                    const offsetTime = time * data.speed + data.timeOffset;
+                    orb.x = data.baseX + Math.sin(offsetTime) * data.radiusX;
+                    orb.y = data.baseY + Math.cos(offsetTime * 0.7) * data.radiusY;
+                    
+                    // Pulse effect
+                    const pulseScale = 1 + Math.sin(time * 2 + index) * 0.1;
+                    orb.scale.set(pulseScale);
+                    
+                    // Update trail
+                    updateTrail(orb, territoryLayer);
+                    
+                    // Spawn particles
+                    if (Math.random() < 0.3) {
+                        spawnParticle(orb, particleLayer);
+                    }
+                });
+                
+                // Update particles
+                updateParticles(orbs, particleLayer);
+            });
+        }
+        
+        function drawGrid(container) {
+            const graphics = new PIXI.Graphics();
+            
+            // Set stroke style for PixiJS v8
+            graphics.setStrokeStyle({
+                width: 1,
+                color: 0x1a1a1a,
+                alpha: 0.5
+            });
+            
+            // Vertical lines
+            for (let x = 0; x <= GAME_WIDTH; x += GRID_SIZE) {
+                graphics.moveTo(x, 0);
+                graphics.lineTo(x, GAME_HEIGHT);
+            }
+            
+            // Horizontal lines
+            for (let y = 0; y <= GAME_HEIGHT; y += GRID_SIZE) {
+                graphics.moveTo(0, y);
+                graphics.lineTo(GAME_WIDTH, y);
+            }
+            
+            graphics.stroke();
+            container.addChild(graphics);
+        }
+        
+        function createGlowingOrb(color, radius) {
+            const container = new PIXI.Container();
+            
+            // Create multiple layers for glow effect
+            for (let i = 3; i >= 0; i--) {
+                const graphics = new PIXI.Graphics();
+                const layerRadius = radius + (i * 10);
+                const alpha = i === 0 ? 1 : 0.3 / i;
+                
+                graphics.circle(0, 0, layerRadius);
+                graphics.fill({ color: color, alpha: alpha });
+                
+                if (i > 0) {
+                    const blurFilter = new PIXI.BlurFilter({ strength: i * 2 });
+                    graphics.filters = [blurFilter];
+                }
+                
+                container.addChild(graphics);
+            }
+            
+            // Set blend mode for glow effect
+            container.blendMode = 'add';
+            
+            return container;
+        }
+        
+        function updateTrail(orb, territoryLayer) {
+            const trail = orb.userData.trail;
+            
+            // Add new trail point
+            trail.push({
+                x: orb.x,
+                y: orb.y,
+                age: 0,
+                color: orb.userData.color
+            });
+            
+            // Update existing trail points
+            for (let i = trail.length - 1; i >= 0; i--) {
+                trail[i].age += 0.02;
+                if (trail[i].age > 1) {
+                    trail.splice(i, 1);
+                }
+            }
+            
+            // Draw trail
+            if (trail.length > 2) {
+                const graphics = new PIXI.Graphics();
+                graphics.blendMode = 'add';
+                
+                for (let i = 1; i < trail.length; i++) {
+                    const point = trail[i];
+                    const prevPoint = trail[i - 1];
+                    const alpha = (1 - point.age) * 0.3;
+                    
+                    graphics.setStrokeStyle({
+                        width: 20,
+                        color: point.color,
+                        alpha: alpha
+                    });
+                    graphics.moveTo(prevPoint.x, prevPoint.y);
+                    graphics.lineTo(point.x, point.y);
+                }
+                
+                graphics.stroke();
+                
+                // Add to territory layer temporarily
+                territoryLayer.addChild(graphics);
+                
+                // Remove after one frame to prevent buildup
+                setTimeout(() => {
+                    territoryLayer.removeChild(graphics);
+                    graphics.destroy();
+                }, 16);
+            }
+        }
+        
+        function spawnParticle(orb, particleLayer) {
+            const particle = new PIXI.Graphics();
+            particle.circle(0, 0, 2 + Math.random() * 3);
+            particle.fill(orb.userData.color);
+            
+            particle.x = orb.x + (Math.random() - 0.5) * 20;
+            particle.y = orb.y + (Math.random() - 0.5) * 20;
+            particle.blendMode = 'add';
+            
+            particle.userData = {
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                life: 1,
+                decay: 0.02
+            };
+            
+            orb.userData.particles.push(particle);
+            particleLayer.addChild(particle);
+        }
+        
+        function updateParticles(orbs, particleLayer) {
+            orbs.forEach(orb => {
+                const particles = orb.userData.particles;
+                
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const particle = particles[i];
+                    const data = particle.userData;
+                    
+                    // Update position
+                    particle.x += data.vx;
+                    particle.y += data.vy;
+                    
+                    // Update life
+                    data.life -= data.decay;
+                    particle.alpha = data.life;
+                    particle.scale.set(data.life);
+                    
+                    // Remove dead particles
+                    if (data.life <= 0) {
+                        particleLayer.removeChild(particle);
+                        particle.destroy();
+                        particles.splice(i, 1);
+                    }
+                }
+            });
+        }
+        
+        // Start the demo
+        init().catch(console.error);
+    </script>
+</body>
+</html>
