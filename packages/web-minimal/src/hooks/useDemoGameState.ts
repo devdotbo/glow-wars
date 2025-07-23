@@ -132,21 +132,21 @@ export function useDemoGameState() {
   const { data: playerPositions = [] } = useQuery({
     ...convexQuery(api.positions.streamPositions, { gameId: state.gameId || '' }),
     enabled: !!state.gameId && state.isReady,
-    refetchInterval: 100,
+    refetchInterval: 250, // Reduced from 100ms
   })
   
   // Query AI entities
   const { data: aiEntities = [] } = useQuery({
     ...convexQuery(api.ai.entities.getEntities, { gameId: state.gameId || '' }),
     enabled: !!state.gameId && state.isReady,
-    refetchInterval: 200,
+    refetchInterval: 500, // Reduced from 200ms
   })
   
   // Query territory map
   const { data: territoryMap = [] } = useQuery({
     ...convexQuery(api.territory.getTerritoryMap, { gameId: state.gameId || '' }),
     enabled: !!state.gameId && state.isReady,
-    refetchInterval: 500,
+    refetchInterval: 1000, // Reduced from 500ms
   })
   
   // Position update mutation

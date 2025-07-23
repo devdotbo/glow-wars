@@ -53,6 +53,7 @@ export class GlowWarsGame {
   private gameData: GameData | null = null
   private lastTime: number = 0
   private isDestroyed: boolean = false
+  private tickerCallback: (() => void) | null = null
 
   async init(canvas: HTMLCanvasElement) {
     console.log('GlowWarsGame: Starting initialization')
@@ -62,6 +63,12 @@ export class GlowWarsGame {
       console.warn('GlowWarsGame: Cannot initialize a destroyed game instance')
       return
     }
+    
+    // Check for existing instances (development warning)
+    if ((window as any).__glowWarsGameInstances) {
+      console.warn('GlowWarsGame: Multiple game instances detected!', (window as any).__glowWarsGameInstances)
+    }
+    (window as any).__glowWarsGameInstances = ((window as any).__glowWarsGameInstances || 0) + 1
     
     try {
       // Create PixiJS application
@@ -94,7 +101,8 @@ export class GlowWarsGame {
 
       // Start the game loop
       this.lastTime = performance.now()
-      this.app.ticker.add(() => this.update())
+      this.tickerCallback = () => this.update()
+      this.app.ticker.add(this.tickerCallback)
       
       console.log('GlowWarsGame: Initialization complete')
     } catch (error) {
@@ -210,10 +218,30 @@ export class GlowWarsGame {
     this.layers.background.addChild(graphics)
   }
 
+  private updateCount = 0
+  private lastUpdateLog = 0
+  private lastDataUpdate = 0
+  private targetFPS = 60
+  private frameTime = 1000 / 60 // Target 60 FPS
+
   private update() {
     const now = performance.now()
     const deltaTime = (now - this.lastTime) / 1000 // Convert to seconds
+    
+    // Frame rate limiting
+    if (now - this.lastTime < this.frameTime) {
+      return // Skip this frame if we're running too fast
+    }
+    
     this.lastTime = now
+    this.updateCount++
+    
+    // Log every second to check if game loop is running too fast
+    if (now - this.lastUpdateLog > 1000) {
+      console.log(`GlowWarsGame: Update rate: ${this.updateCount} updates/sec`)
+      this.updateCount = 0
+      this.lastUpdateLog = now
+    }
     
     // Update input
     if (this.inputManager) {
@@ -225,8 +253,11 @@ export class GlowWarsGame {
       this.entityManager.update(deltaTime)
     }
     
-    // Update game data from subscriptions
-    this.updateEntities()
+    // Update game data from subscriptions (throttled to 20 times per second)
+    if (now - this.lastDataUpdate > 50) { // 50ms = 20 updates per second
+      this.updateEntities()
+      this.lastDataUpdate = now
+    }
   }
 
   destroy() {
@@ -238,6 +269,11 @@ export class GlowWarsGame {
     }
     
     this.isDestroyed = true
+    
+    // Track instance destruction
+    if ((window as any).__glowWarsGameInstances) {
+      (window as any).__glowWarsGameInstances--
+    }
     
     if (this.entityManager) {
       this.entityManager.destroy()
@@ -255,6 +291,12 @@ export class GlowWarsGame {
     }
     
     if (this.app) {
+      // Remove ticker callback before destroying app
+      if (this.tickerCallback) {
+        this.app.ticker.remove(this.tickerCallback)
+        this.tickerCallback = null
+      }
+      
       this.app.destroy(true, { children: true, texture: true, baseTexture: true })
       this.app = null
     }

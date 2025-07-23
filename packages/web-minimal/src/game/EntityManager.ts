@@ -93,6 +93,11 @@ export class EntityManager {
     // Create a set of current entity IDs
     const currentIds = new Set(entityData.map(e => e._id))
     
+    // Log entity count to debug
+    if (entityData.length > 10) {
+      console.warn('EntityManager: Large number of AI entities:', entityData.length)
+    }
+    
     // Remove entities that no longer exist
     for (const [id, entity] of this.aiEntities) {
       if (!currentIds.has(id as Id<'aiEntities'>)) {
@@ -107,19 +112,22 @@ export class EntityManager {
       
       if (!entity) {
         // Create new entity based on type
+        console.log(`EntityManager: Creating ${data.type} entity ${data._id}`)
+        
         if (data.type === 'spark') {
           entity = new Spark({
             id: data._id,
             x: data.position.x,
             y: data.position.y,
           })
-        } else if (data.type === 'shadow_creeper') {
+        } else if (data.type === 'shadow_creeper' || data.type === 'creeper') {
           entity = new ShadowCreeper({
             id: data._id,
             x: data.position.x,
             y: data.position.y,
           })
         } else {
+          console.warn(`EntityManager: Unknown entity type: ${data.type}`)
           continue // Unknown entity type
         }
         
