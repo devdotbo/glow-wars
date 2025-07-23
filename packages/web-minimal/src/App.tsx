@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConvexProvider } from 'convex/react'
 import { useGameState } from './hooks/useGameState'
 import { MenuUI } from './ui/MenuUI'
+import { useDemoMode } from './hooks/useDemoMode'
+import { DemoGame } from './components/DemoGame'
 
 // Initialize Convex clients
 const convexUrl = import.meta.env.VITE_CONVEX_URL
@@ -25,6 +27,18 @@ export function App() {
 }
 
 function GameContainer() {
+  const isDemoMode = useDemoMode()
+  
+  // If demo mode is active, render the DemoGame component
+  if (isDemoMode) {
+    return <DemoGame />
+  }
+  
+  // Normal game flow
+  return <NormalGame />
+}
+
+function NormalGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gameRef = useRef<GlowWarsGame | null>(null)
   const { 
@@ -40,6 +54,14 @@ function GameContainer() {
 
   // Check if we should show the game or menu
   const isInActiveGame = currentGame && currentGame.status === 'active' && gameSession.gameId
+  
+  // Debug logging
+  console.log('App: Game state check:', {
+    currentGame: currentGame,
+    gameStatus: currentGame?.status,
+    gameId: gameSession.gameId,
+    isInActiveGame,
+  })
 
   useEffect(() => {
     if (!canvasRef.current || !isInActiveGame) {
@@ -74,11 +96,10 @@ function GameContainer() {
     
     // Prepare game players with full info
     const gamePlayersWithInfo = gamePlayers.map(gp => {
-      const player = gp.player
       return {
         playerId: gp.playerId,
-        name: player?.name || 'Unknown',
-        color: player?.color || '#ffffff',
+        name: gp.player.name,
+        color: gp.player.color,
       }
     })
     

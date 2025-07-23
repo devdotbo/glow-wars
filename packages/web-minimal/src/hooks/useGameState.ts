@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from '@glow-wars/convex/_generated/api'
 import { Id } from '@glow-wars/convex/_generated/dataModel'
@@ -53,6 +53,7 @@ function generateRandomColor(): string {
 
 export function useGameState() {
   const convex = useConvex()
+  const queryClient = useQueryClient()
   const [guestPlayer, setGuestPlayer] = useState<GuestPlayer | null>(null)
   const [gameSession, setGameSession] = useState<GameSession>({
     gameId: null,
@@ -97,15 +98,43 @@ export function useGameState() {
     refetchInterval: 1000, // Refresh every second
   })
 
-  // Query current game if in one
-  const { data: currentGame } = useQuery({
-    ...convexQuery(api.games.getGame, { gameId: gameSession.gameId || '' }),
-    enabled: !!gameSession.gameId,
+  // Query active game for player - this is our source of truth
+  const { data: activeGameData } = useQuery({
+    ...convexQuery(api.games.getActiveGameForPlayer, { playerId: guestPlayer?.id || '' }),
+    enabled: !!guestPlayer?.id,
   })
+  
+  // Update gameSession when activeGameData changes
+  useEffect(() => {
+    console.log('useGameState: activeGameData effect:', {
+      activeGameData,
+      currentGameId: gameSession.gameId,
+      guestPlayerId: guestPlayer?.id,
+    })
+    
+    if (activeGameData && activeGameData.gameId !== gameSession.gameId) {
+      console.log('Updating gameSession from activeGameData:', activeGameData)
+      setGameSession({
+        gameId: activeGameData.gameId,
+        playerId: guestPlayer!.id,
+        isHost: activeGameData.isHost,
+      })
+    } else if (!activeGameData && gameSession.gameId) {
+      console.log('Clearing gameSession as no active game found')
+      setGameSession({
+        gameId: null,
+        playerId: guestPlayer?.id || null,
+        isHost: false,
+      })
+    }
+  }, [activeGameData, guestPlayer])
 
-  // Query game players if in game
+  // Use activeGameData for current game
+  const currentGame = activeGameData?.game
+
+  // Query game players with info if in game
   const { data: gamePlayers = [] } = useQuery({
-    ...convexQuery(api.games.getGamePlayers, { gameId: gameSession.gameId || '' }),
+    ...convexQuery(api.games.getGamePlayersWithInfo, { gameId: gameSession.gameId || '' }),
     enabled: !!gameSession.gameId,
   })
   
@@ -215,13 +244,31 @@ export function useGameState() {
   // Start game mutation (host only)
   const startGameMutation = useMutation({
     mutationFn: async () => {
-      if (!gameSession.gameId || !gameSession.isHost) {
+      const gameId = activeGameData?.gameId || gameSession.gameId
+      const isHost = activeGameData?.isHost || gameSession.isHost
+      
+      if (!gameId || !isHost) {
         throw new Error('Only host can start game')
       }
       
+      console.log('Starting game with ID:', gameId)
+      
       await convex.mutation(api.games.startGame, {
-        gameId: gameSession.gameId,
+        gameId,
       })
+    },
+    onSuccess: () => {
+      console.log('Game started successfully, invalidating queries')
+      
+      // Invalidate queries to force refetch
+      if (guestPlayer?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: convexQuery(api.games.getActiveGameForPlayer, { playerId: guestPlayer.id }).queryKey 
+        })
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to start game:', error)
     },
   })
 
