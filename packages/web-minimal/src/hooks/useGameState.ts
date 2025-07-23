@@ -106,12 +106,6 @@ export function useGameState() {
   
   // Update gameSession when activeGameData changes
   useEffect(() => {
-    console.log('useGameState: activeGameData effect:', {
-      activeGameData,
-      currentGameId: gameSession.gameId,
-      guestPlayerId: guestPlayer?.id,
-    })
-    
     if (activeGameData && activeGameData.gameId !== gameSession.gameId) {
       console.log('Updating gameSession from activeGameData:', activeGameData)
       setGameSession({

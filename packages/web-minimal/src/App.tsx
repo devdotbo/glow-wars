@@ -54,14 +54,6 @@ function NormalGame() {
 
   // Check if we should show the game or menu
   const isInActiveGame = currentGame && currentGame.status === 'active' && gameSession.gameId
-  
-  // Debug logging
-  console.log('App: Game state check:', {
-    currentGame: currentGame,
-    gameStatus: currentGame?.status,
-    gameId: gameSession.gameId,
-    isInActiveGame,
-  })
 
   useEffect(() => {
     if (!canvasRef.current || !isInActiveGame) {
