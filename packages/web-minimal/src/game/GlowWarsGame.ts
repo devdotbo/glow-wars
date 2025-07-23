@@ -52,9 +52,17 @@ export class GlowWarsGame {
   
   private gameData: GameData | null = null
   private lastTime: number = 0
+  private isDestroyed: boolean = false
 
   async init(canvas: HTMLCanvasElement) {
     console.log('GlowWarsGame: Starting initialization')
+    
+    // Prevent initialization if already destroyed
+    if (this.isDestroyed) {
+      console.warn('GlowWarsGame: Cannot initialize a destroyed game instance')
+      return
+    }
+    
     try {
       // Create PixiJS application
       this.app = new Application()
@@ -222,6 +230,15 @@ export class GlowWarsGame {
   }
 
   destroy() {
+    console.log('GlowWarsGame: Destroying game instance')
+    
+    if (this.isDestroyed) {
+      console.warn('GlowWarsGame: Already destroyed')
+      return
+    }
+    
+    this.isDestroyed = true
+    
     if (this.entityManager) {
       this.entityManager.destroy()
       this.entityManager = null
@@ -241,5 +258,8 @@ export class GlowWarsGame {
       this.app.destroy(true, { children: true, texture: true, baseTexture: true })
       this.app = null
     }
+    
+    this.gameData = null
+    this.layers = null
   }
 }

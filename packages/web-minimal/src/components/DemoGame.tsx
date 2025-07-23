@@ -29,6 +29,12 @@ export function DemoGame() {
     if (!canvasRef.current || !isReady || error) return
     if (!currentGame || currentGame.status !== 'active') return
     
+    // Prevent double initialization
+    if (gameRef.current) {
+      console.log('Demo: Game already initialized, skipping...')
+      return
+    }
+    
     console.log('Demo: Initializing PixiJS game...')
     const game = new GlowWarsGame()
     gameRef.current = game
@@ -38,8 +44,11 @@ export function DemoGame() {
     })
     
     return () => {
-      game.destroy()
-      gameRef.current = null
+      console.log('Demo: Cleaning up game instance...')
+      if (gameRef.current) {
+        gameRef.current.destroy()
+        gameRef.current = null
+      }
     }
   }, [isReady, error, currentGame])
   

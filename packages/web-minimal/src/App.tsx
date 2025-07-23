@@ -59,9 +59,16 @@ function NormalGame() {
     if (!canvasRef.current || !isInActiveGame) {
       // Cleanup game if we're not in active game
       if (gameRef.current) {
+        console.log('App: Cleaning up game instance')
         gameRef.current.destroy()
         gameRef.current = null
       }
+      return
+    }
+
+    // Prevent double initialization
+    if (gameRef.current) {
+      console.log('App: Game already initialized, skipping...')
       return
     }
 
@@ -77,8 +84,11 @@ function NormalGame() {
 
     // Cleanup on unmount or when leaving game
     return () => {
-      game.destroy()
-      gameRef.current = null
+      console.log('App: Cleanup called')
+      if (gameRef.current) {
+        gameRef.current.destroy()
+        gameRef.current = null
+      }
     }
   }, [isInActiveGame])
   
