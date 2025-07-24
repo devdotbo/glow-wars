@@ -1,5 +1,40 @@
 import { Application, Container, Graphics } from 'pixi.js'
 import { GAME_CONFIG } from '@glow-wars/shared/constants'
+import { Id } from '@glow-wars/convex/_generated/dataModel'
+import { EntityManager } from './EntityManager'
+import { TerritoryRenderer } from './systems/TerritoryRenderer'
+import { InputManager } from './InputManager'
+
+interface GameData {
+  playerPositions: Array<{
+    playerId: Id<'players'>
+    x: number
+    y: number
+    glowRadius: number
+    isAlive: boolean
+  }>
+  aiEntities: Array<{
+    _id: Id<'aiEntities'>
+    type: string
+    position: { x: number; y: number }
+    state: string
+    targetId?: Id<'players'>
+    health: number
+  }>
+  territoryMap: Array<{
+    gridX: number
+    gridY: number
+    ownerId?: Id<'players'>
+    paintedAt: number
+  }>
+  gamePlayers: Array<{
+    playerId: Id<'players'>
+    name: string
+    color: string
+  }>
+  localPlayerId?: Id<'players'>
+  onPositionUpdate: (x: number, y: number) => void
+}
 
 export class GlowWarsGame {
   private app: Application | null = null
@@ -10,9 +45,31 @@ export class GlowWarsGame {
     effects: Container
     ui: Container
   } | null = null
+  
+  private entityManager: EntityManager | null = null
+  private territoryRenderer: TerritoryRenderer | null = null
+  private inputManager: InputManager | null = null
+  
+  private gameData: GameData | null = null
+  private lastTime: number = 0
+  private isDestroyed: boolean = false
+  private tickerCallback: (() => void) | null = null
 
   async init(canvas: HTMLCanvasElement) {
     console.log('GlowWarsGame: Starting initialization')
+    
+    // Prevent initialization if already destroyed
+    if (this.isDestroyed) {
+      console.warn('GlowWarsGame: Cannot initialize a destroyed game instance')
+      return
+    }
+    
+    // Check for existing instances (development warning)
+    if ((window as any).__glowWarsGameInstances) {
+      console.warn('GlowWarsGame: Multiple game instances detected!', (window as any).__glowWarsGameInstances)
+    }
+    (window as any).__glowWarsGameInstances = ((window as any).__glowWarsGameInstances || 0) + 1
+    
     try {
       // Create PixiJS application
       this.app = new Application()
@@ -35,14 +92,82 @@ export class GlowWarsGame {
 
       // Draw background grid
       this.drawBackgroundGrid()
+      
+      // Create managers
+      if (this.layers) {
+        this.entityManager = new EntityManager(this.layers.entities)
+        this.territoryRenderer = new TerritoryRenderer(this.layers.territory)
+      }
 
       // Start the game loop
-      this.app.ticker.add(() => this.update())
+      this.lastTime = performance.now()
+      this.tickerCallback = () => this.update()
+      this.app.ticker.add(this.tickerCallback)
       
       console.log('GlowWarsGame: Initialization complete')
     } catch (error) {
       console.error('GlowWarsGame: Initialization failed', error)
       throw error
+    }
+  }
+  
+  setGameData(data: GameData) {
+    this.gameData = data
+    
+    // Set up player info for entity manager
+    if (this.entityManager && data.gamePlayers) {
+      this.entityManager.setPlayersInfo(data.gamePlayers)
+      
+      // Update player colors for territory
+      if (this.territoryRenderer) {
+        this.territoryRenderer.setPlayerColors(data.gamePlayers)
+      }
+    }
+    
+    // Set up input manager if we have a local player
+    if (data.localPlayerId && !this.inputManager) {
+      this.inputManager = new InputManager(
+        (x, y) => {
+          // Send position update to backend
+          data.onPositionUpdate(x, y)
+        },
+        (active) => {
+          // Handle boost (TODO: implement boost mutation)
+          console.log('Boost:', active)
+        }
+      )
+      
+      // Set initial position
+      const localPlayer = data.playerPositions.find(p => p.playerId === data.localPlayerId)
+      if (localPlayer) {
+        this.inputManager.setPlayerPosition(localPlayer.x, localPlayer.y)
+      }
+    }
+    
+    // Update all entities
+    this.updateEntities()
+  }
+  
+  private updateEntities() {
+    if (!this.gameData || !this.entityManager || !this.territoryRenderer) return
+    
+    // Update players
+    this.entityManager.updatePlayers(this.gameData.playerPositions)
+    
+    // Update AI entities
+    this.entityManager.updateAIEntities(this.gameData.aiEntities)
+    
+    // Update territory
+    this.territoryRenderer.updateTerritory(this.gameData.territoryMap)
+    
+    // Update input manager position
+    if (this.inputManager && this.gameData.localPlayerId) {
+      const localPlayer = this.gameData.playerPositions.find(
+        p => p.playerId === this.gameData!.localPlayerId
+      )
+      if (localPlayer) {
+        this.inputManager.setPlayerPosition(localPlayer.x, localPlayer.y)
+      }
     }
   }
 
@@ -93,14 +218,90 @@ export class GlowWarsGame {
     this.layers.background.addChild(graphics)
   }
 
+  private updateCount = 0
+  private lastUpdateLog = 0
+  private lastDataUpdate = 0
+  private targetFPS = 60
+  private frameTime = 1000 / 60 // Target 60 FPS
+
   private update() {
-    // Game update logic will go here
+    const now = performance.now()
+    const deltaTime = (now - this.lastTime) / 1000 // Convert to seconds
+    
+    // Frame rate limiting
+    if (now - this.lastTime < this.frameTime) {
+      return // Skip this frame if we're running too fast
+    }
+    
+    this.lastTime = now
+    this.updateCount++
+    
+    // Log every second to check if game loop is running too fast
+    if (now - this.lastUpdateLog > 1000) {
+      console.log(`GlowWarsGame: Update rate: ${this.updateCount} updates/sec`)
+      this.updateCount = 0
+      this.lastUpdateLog = now
+    }
+    
+    // Update input
+    if (this.inputManager) {
+      this.inputManager.update(deltaTime)
+    }
+    
+    // Update entities
+    if (this.entityManager) {
+      this.entityManager.update(deltaTime)
+    }
+    
+    // Update game data from subscriptions (throttled to 20 times per second)
+    if (now - this.lastDataUpdate > 50) { // 50ms = 20 updates per second
+      this.updateEntities()
+      this.lastDataUpdate = now
+    }
   }
 
   destroy() {
+    console.log('GlowWarsGame: Destroying game instance')
+    
+    if (this.isDestroyed) {
+      console.warn('GlowWarsGame: Already destroyed')
+      return
+    }
+    
+    this.isDestroyed = true
+    
+    // Track instance destruction
+    if ((window as any).__glowWarsGameInstances) {
+      (window as any).__glowWarsGameInstances--
+    }
+    
+    if (this.entityManager) {
+      this.entityManager.destroy()
+      this.entityManager = null
+    }
+    
+    if (this.territoryRenderer) {
+      this.territoryRenderer.destroy()
+      this.territoryRenderer = null
+    }
+    
+    if (this.inputManager) {
+      this.inputManager.destroy()
+      this.inputManager = null
+    }
+    
     if (this.app) {
+      // Remove ticker callback before destroying app
+      if (this.tickerCallback) {
+        this.app.ticker.remove(this.tickerCallback)
+        this.tickerCallback = null
+      }
+      
       this.app.destroy(true, { children: true, texture: true, baseTexture: true })
       this.app = null
     }
+    
+    this.gameData = null
+    this.layers = null
   }
 }

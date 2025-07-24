@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConvexProvider } from 'convex/react'
 import { useGameState } from './hooks/useGameState'
 import { MenuUI } from './ui/MenuUI'
+import { useDemoMode } from './hooks/useDemoMode'
+import { DemoGame } from './components/DemoGame'
 
 // Initialize Convex clients
 const convexUrl = import.meta.env.VITE_CONVEX_URL
@@ -25,9 +27,30 @@ export function App() {
 }
 
 function GameContainer() {
+  const isDemoMode = useDemoMode()
+  
+  // If demo mode is active, render the DemoGame component
+  if (isDemoMode) {
+    return <DemoGame />
+  }
+  
+  // Normal game flow
+  return <NormalGame />
+}
+
+function NormalGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gameRef = useRef<GlowWarsGame | null>(null)
-  const { currentGame, gameSession } = useGameState()
+  const { 
+    currentGame, 
+    gameSession, 
+    guestPlayer,
+    gamePlayers,
+    playerPositions,
+    aiEntities,
+    territoryMap,
+    updatePosition
+  } = useGameState()
 
   // Check if we should show the game or menu
   const isInActiveGame = currentGame && currentGame.status === 'active' && gameSession.gameId
@@ -36,9 +59,16 @@ function GameContainer() {
     if (!canvasRef.current || !isInActiveGame) {
       // Cleanup game if we're not in active game
       if (gameRef.current) {
+        console.log('App: Cleaning up game instance')
         gameRef.current.destroy()
         gameRef.current = null
       }
+      return
+    }
+
+    // Prevent double initialization
+    if (gameRef.current) {
+      console.log('App: Game already initialized, skipping...')
       return
     }
 
@@ -54,10 +84,36 @@ function GameContainer() {
 
     // Cleanup on unmount or when leaving game
     return () => {
-      game.destroy()
-      gameRef.current = null
+      console.log('App: Cleanup called')
+      if (gameRef.current) {
+        gameRef.current.destroy()
+        gameRef.current = null
+      }
     }
   }, [isInActiveGame])
+  
+  // Update game data whenever it changes
+  useEffect(() => {
+    if (!gameRef.current || !isInActiveGame || !gameSession.playerId) return
+    
+    // Prepare game players with full info
+    const gamePlayersWithInfo = gamePlayers.map(gp => {
+      return {
+        playerId: gp.playerId,
+        name: gp.player.name,
+        color: gp.player.color,
+      }
+    })
+    
+    gameRef.current.setGameData({
+      playerPositions,
+      aiEntities,
+      territoryMap,
+      gamePlayers: gamePlayersWithInfo,
+      localPlayerId: gameSession.playerId,
+      onPositionUpdate: updatePosition,
+    })
+  }, [playerPositions, aiEntities, territoryMap, gamePlayers, gameSession.playerId, isInActiveGame, updatePosition])
 
   // Show menu if not in active game
   if (!isInActiveGame) {

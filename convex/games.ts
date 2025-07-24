@@ -292,6 +292,58 @@ export const getGamePlayers = query({
   },
 })
 
+export const getGamePlayersWithInfo = query({
+  args: {
+    gameId: v.id('games'),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id('gamePlayers'),
+      _creationTime: v.number(),
+      gameId: v.id('games'),
+      playerId: v.id('players'),
+      position: v.object({ x: v.number(), y: v.number() }),
+      glowRadius: v.number(),
+      isAlive: v.boolean(),
+      score: v.number(),
+      joinedAt: v.number(),
+      player: v.object({
+        _id: v.id('players'),
+        _creationTime: v.number(),
+        name: v.string(),
+        color: v.string(),
+      }),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const gamePlayers = await ctx.db
+      .query('gamePlayers')
+      .withIndex('by_game', q => q.eq('gameId', args.gameId))
+      .collect()
+
+    // Join with player data
+    const gamePlayersWithInfo = await Promise.all(
+      gamePlayers.map(async (gp) => {
+        const player = await ctx.db.get(gp.playerId)
+        if (!player) {
+          throw new Error(`Player ${gp.playerId} not found`)
+        }
+        return {
+          ...gp,
+          player: {
+            _id: player._id,
+            _creationTime: player._creationTime,
+            name: player.name,
+            color: player.color,
+          },
+        }
+      })
+    )
+
+    return gamePlayersWithInfo
+  },
+})
+
 export const listAvailableGames = query({
   args: {},
   returns: v.array(
@@ -345,5 +397,75 @@ export const listAvailableGames = query({
     )
 
     return availableGames
+  },
+})
+
+export const getActiveGameForPlayer = query({
+  args: {
+    playerId: v.id('players'),
+  },
+  returns: v.union(
+    v.object({
+      gameId: v.id('games'),
+      game: v.object({
+        _id: v.id('games'),
+        _creationTime: v.number(),
+        name: v.string(),
+        status: v.union(
+          v.literal('waiting'),
+          v.literal('active'),
+          v.literal('finished')
+        ),
+        maxPlayers: v.number(),
+        mapType: v.string(),
+        createdBy: v.id('players'),
+        startedAt: v.optional(v.number()),
+        finishedAt: v.optional(v.number()),
+        winnerId: v.optional(v.id('players')),
+        winCondition: v.optional(v.union(
+          v.literal('territory'),
+          v.literal('elimination'),
+          v.literal('time_limit')
+        )),
+        finalStats: v.optional(v.object({
+          duration: v.number(),
+          totalTerritory: v.number(),
+          playerStats: v.array(v.object({
+            playerId: v.id('players'),
+            score: v.number(),
+            territoryCaptured: v.number(),
+            eliminations: v.number(),
+            survivalTime: v.number(),
+            placement: v.number(),
+          })),
+        })),
+        timeLimit: v.number(),
+        lastActivity: v.optional(v.number()),
+      }),
+      isHost: v.boolean(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    // Find game where player is participating
+    const gamePlayer = await ctx.db
+      .query('gamePlayers')
+      .withIndex('by_player', q => q.eq('playerId', args.playerId))
+      .first()
+    
+    if (!gamePlayer) {
+      return null
+    }
+    
+    const game = await ctx.db.get(gamePlayer.gameId)
+    if (!game || game.status === 'finished') {
+      return null
+    }
+    
+    return {
+      gameId: gamePlayer.gameId,
+      game,
+      isHost: game.createdBy === args.playerId,
+    }
   },
 })

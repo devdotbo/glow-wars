@@ -58,7 +58,8 @@ export default defineSchema({
     placement: v.optional(v.number()), // 1st, 2nd, 3rd, etc.
   })
     .index('by_game_and_player', ['gameId', 'playerId'])
-    .index('by_game', ['gameId']),
+    .index('by_game', ['gameId'])
+    .index('by_player', ['playerId']),
 
   // Real-time position tracking
   positions: defineTable({
